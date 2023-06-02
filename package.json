@@ -1,0 +1,16 @@
+{
+  "name": "app-chat",
+  "version": "1.0.0",
+  "description": "App chat realtime NodeJS",
+  "main": "index.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.6.1"
+  }
+}

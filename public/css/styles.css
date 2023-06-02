@@ -1,0 +1,54 @@
+#content {
+    border: 1px solid darkgrey;
+    width: auto;
+    height: 300px;
+    padding: 10px;
+    overflow-y: scroll;
+}
+
+#content p {
+    margin: 5px;
+}
+
+#username,
+#content,
+#message,
+#sendMessage {
+    margin-bottom: 5px;
+}
+
+.message.deleted {
+    font-style: italic;
+}
+
+.line-message .action-box {
+    display: none;
+    float: right;
+}
+
+.line-message:hover {
+    background-color: #f2f3f5;
+}
+
+.line-message:hover .action-box {
+    display: inline-block;
+    position: relative;
+    right: 0;
+    top: -2.5rem;
+    z-index: 10;
+}
+
+.more-dropdown-list {
+    display: none;
+    z-index: 9999;
+    overflow-y: auto;
+    position: absolute;
+    top: 29px;
+    left: -30px;
+    background-color: #fff;
+    padding: 10px;
+}
+
+.more-dropdown-list div:hover {
+    background-color: #f2f3f5;
+}
