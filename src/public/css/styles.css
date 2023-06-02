@@ -10,6 +10,14 @@
     margin: 5px;
 }
 
+#message {
+    width: -webkit-fill-available;
+}
+
+.message-content {
+    margin-left: 10px;
+}
+
 #username,
 #content,
 #message,
@@ -24,17 +32,9 @@
 .line-message .action-box {
     display: none;
     float: right;
-}
-
-.line-message:hover {
-    background-color: #f2f3f5;
-}
-
-.line-message:hover .action-box {
-    display: inline-block;
     position: relative;
     right: 0;
-    top: -2.5rem;
+    top: -3.5rem;
     z-index: 10;
 }
 

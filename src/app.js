@@ -13,7 +13,7 @@ var io = require('socket.io')(server, {
 });
 const port = 3000
 
-app.use(express.static('public'));
+app.use(express.static('src/public'));
 
 app.get("/", function (req, res) {
     res.sendFile(path.join(__dirname + '/views/chat.html'));
