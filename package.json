@@ -4,13 +4,15 @@
   "description": "App chat realtime NodeJS",
   "main": "index.js",
   "scripts": {
-    "start": "node app.js"
+    "start": "node src/app.js",
+    "compile": "lessc src/public/css/reaction-icon.less src/public/css/reaction-icon.css"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "express": "^4.18.2",
+    "less": "^4.1.3",
     "socket.io": "^4.6.1"
   }
 }
