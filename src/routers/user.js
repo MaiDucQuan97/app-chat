@@ -6,7 +6,7 @@ const router = express.Router()
 router.post('/user/create', async (req, res) => {
     try {
         const user = await User(req.body)
-        await user.generateAuthToken()
+        // await user.generateAuthToken()
 
         await user.save()
         res.send(user)
@@ -15,15 +15,15 @@ router.post('/user/create', async (req, res) => {
     }
 })
 
-router.post('/user/logout', auth, async (req, res) => {
+router.post('/user/logout', auth, (req, res) => {
     try {
-        req.user.tokens = req.user.tokens.filter((token) => {
-            return token.token !== req.token
-        })
-
-        await req.user.save()
-
-        res.send()
+        req.session.destroy((err) => {
+            if (err) {
+                console.error('Error destroying session:', err);
+            } else {
+                res.redirect('/login');
+            }
+        });
     } catch (error) {
         res.status(500).send()
     }
@@ -37,12 +37,12 @@ router.post('/user/login', async (req, res) => {
     try {
         const user = await User.findByCredentials(req.body.username, req.body.password)
 
-        const token = await user.generateAuthToken()
+        // const token = await user.generateAuthToken()
 
         req.session.isLoggedIn = true;
         req.session.user = user;
 
-        res.send({ user, token })
+        res.send({ user, isLoggedIn: true })
     } catch (e) {
         res.status(400).send(e)
     }

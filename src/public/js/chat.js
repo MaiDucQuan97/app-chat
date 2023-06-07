@@ -162,4 +162,20 @@ $(function () {
             editMessageId = ''
         }
     })
+
+    $('#logout-btn').on("click", function () {
+        $.ajax({
+            type: 'POST',
+            url: '/user/logout',
+            success: function (response) {
+                console.log(response)
+                alert('Logout successful!');
+                window.location.href = '/login'
+            },
+            error: function (xhr, status, error) {
+                console.log(xhr.responseText)
+                alert('Logout failed. Please try again.');
+            }
+        });
+    })
 })

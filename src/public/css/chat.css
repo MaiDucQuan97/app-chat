@@ -61,3 +61,17 @@
 .more-dropdown-list div:hover {
     background-color: #f2f3f5;
 }
+
+#logout-btn {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+}
+
+#logout-btn button {
+    padding: 8px 16px;
+    background-color: #f44336;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
