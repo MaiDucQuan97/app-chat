@@ -1,26 +1,60 @@
-var path = require("path");
-var express = require("express");
-var app = express();
-var server = require('http').createServer(app);
-var io = require('socket.io')(server, {
+require('./db/mongoose')
+const express = require("express");
+const session = require('express-session');
+const hbs = require('hbs');
+const path = require('path');
+
+const app = express();
+const routeUser = require('./routers/user'),
+    routePage = require('./routers/page')
+const server = require('http').createServer(app);
+const port = process.env.PORT
+const io = require('socket.io')(server, {
     cors: {
-        origin: "http://localhost:3000",
+        origin: `http://localhost:${port}`,
         methods: ["GET", "POST"],
         transports: ['websocket', 'polling'],
         credentials: true
     },
     allowEIO3: true
 });
-const port = 3000
 const messageReactions = {};
+const viewsPath = path.join(__dirname, '../src/templates/views');
+const partialsPath = path.join(__dirname, '../src/templates/partials');
 
+app.set('view engine', 'hbs');
+app.set('views', viewsPath);
+hbs.registerPartials(partialsPath);
+const sessionMiddleware = session({
+    secret: 'app_chat_secret_key',
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+        secure: false,
+        maxAge: 3600000 // 1 hour
+    },
+})
+app.use(sessionMiddleware);
+io.use((socket, next) => {
+    sessionMiddleware(socket.request, {}, next);
+});
+app.use((req, res, next) => {
+    if (req.session && req.session.cookie.expires < Date.now()) {
+        console.log('Session expired:', req.sessionID);
+    }
+
+    next();
+});
+app.use(express.json())
+app.use(routeUser)
+app.use(routePage)
 app.use(express.static('src/public'));
 
-app.get("/", function (req, res) {
-    res.sendFile(path.join(__dirname + '/views/chat.html'));
-});
-
 io.on('connection', function (socket) {
+    socket.use((socket, next) => {
+        next();
+    })
+
     socket.on('send message', function (data) {
         const messageId = (!data.id) ? generateMessageId() : data.id
         let message = {}

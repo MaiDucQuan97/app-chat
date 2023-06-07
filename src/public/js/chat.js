@@ -4,7 +4,7 @@ $(function () {
         editMessageId = ''
 
     const sendMessage = function () {
-        let username = $('#username').val();
+        let username = $('#username').text();
         let message = $('#message').val();
 
         if (username == '' || $.trim(message) == '') {
@@ -161,5 +161,21 @@ $(function () {
             $("#message").css('background-color', '')
             editMessageId = ''
         }
+    })
+
+    $('#logout-btn').on("click", function () {
+        $.ajax({
+            type: 'POST',
+            url: '/user/logout',
+            success: function (response) {
+                console.log(response)
+                alert('Logout successful!');
+                window.location.href = '/login'
+            },
+            error: function (xhr, status, error) {
+                console.log(xhr.responseText)
+                alert('Logout failed. Please try again.');
+            }
+        });
     })
 })
