@@ -4,7 +4,7 @@ $(function () {
         editMessageId = ''
 
     const sendMessage = function () {
-        let username = $('#username').val();
+        let username = $('#username').text();
         let message = $('#message').val();
 
         if (username == '' || $.trim(message) == '') {

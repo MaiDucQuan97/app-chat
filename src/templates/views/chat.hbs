@@ -16,12 +16,13 @@
 </head>
 
 <body>
+    {{>header}}
     <div id="logout-btn">
         <button>Logout</button>
     </div>
     <fieldset>
         <legend>Demo chat realtime NodeJS</legend>
-        <input type="text" id="username" name="username" placeholder="Enter name">
+        <h3 id="username">{{username}}</h3>
         <br>
         <div id="content"></div>
 

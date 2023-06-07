@@ -1,6 +1,8 @@
 require('./db/mongoose')
 const express = require("express");
 const session = require('express-session');
+const hbs = require('hbs');
+const path = require('path');
 
 const app = express();
 const routeUser = require('./routers/user'),
@@ -17,19 +19,25 @@ const io = require('socket.io')(server, {
     allowEIO3: true
 });
 const messageReactions = {};
+const viewsPath = path.join(__dirname, '../src/templates/views');
+const partialsPath = path.join(__dirname, '../src/templates/partials');
 
-app.use(
-    session({
-        secret: 'app_chat_secret_key',
-        resave: false,
-        saveUninitialized: true,
-        cookie: {
-            secure: false,
-            maxAge: 3600000 // 1 hour
-            // maxAge: 30000 // 30s
-        },
-    })
-);
+app.set('view engine', 'hbs');
+app.set('views', viewsPath);
+hbs.registerPartials(partialsPath);
+const sessionMiddleware = session({
+    secret: 'app_chat_secret_key',
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+        secure: false,
+        maxAge: 3600000 // 1 hour
+    },
+})
+app.use(sessionMiddleware);
+io.use((socket, next) => {
+    sessionMiddleware(socket.request, {}, next);
+});
 app.use((req, res, next) => {
     if (req.session && req.session.cookie.expires < Date.now()) {
         console.log('Session expired:', req.sessionID);
@@ -43,6 +51,10 @@ app.use(routePage)
 app.use(express.static('src/public'));
 
 io.on('connection', function (socket) {
+    socket.use((socket, next) => {
+        next();
+    })
+
     socket.on('send message', function (data) {
         const messageId = (!data.id) ? generateMessageId() : data.id
         let message = {}
