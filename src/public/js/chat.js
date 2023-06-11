@@ -3,9 +3,12 @@ $(function () {
         isShowReactionList = false,
         editMessageId = ''
 
+    const socket = io()
+
     const sendMessage = function () {
-        let username = $('#username').text();
-        let message = $('#message').val();
+        let currentUser = JSON.parse(window.localStorage.getItem('current_user')),
+            username = currentUser ? currentUser.username : 'Anonymous',
+            message = $('#message').val();
 
         if (username == '' || $.trim(message) == '') {
             alert('Please enter name and message!!');
@@ -35,8 +38,6 @@ $(function () {
         let messageTextDeleted = `<div class='line-message' id=${lineMessageId}><p class='message deleted'>This message was deleted!</p></div>`
         $(`#${lineMessageId}`).replaceWith(messageTextDeleted)
     }
-
-    var socket = io.connect('http://localhost:3000');
 
     socket.on("new message", function (data) {
         let lineMessageId = generateElementId('message', data.id),
