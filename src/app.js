@@ -1,7 +1,6 @@
 require('./db/mongoose')
 const express = require("express");
 const session = require('express-session');
-const hbs = require('hbs');
 const path = require('path');
 
 const app = express();
@@ -19,12 +18,6 @@ const io = require('socket.io')(server, {
     allowEIO3: true
 });
 const messageReactions = {};
-const viewsPath = path.join(__dirname, '../src/templates/views');
-const partialsPath = path.join(__dirname, '../src/templates/partials');
-
-app.set('view engine', 'hbs');
-app.set('views', viewsPath);
-hbs.registerPartials(partialsPath);
 const sessionMiddleware = session({
     secret: 'app_chat_secret_key',
     resave: false,
@@ -64,6 +57,7 @@ io.on('connection', function (socket) {
                 id: messageId,
                 message: data.message,
                 username: data.username,
+                createdAt: new Date().getTime(),
                 reactions: [],
             };
             messageReactions[messageId] = message;
