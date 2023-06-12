@@ -3,9 +3,12 @@ $(function () {
         isShowReactionList = false,
         editMessageId = ''
 
+    const socket = io()
+
     const sendMessage = function () {
-        let username = $('#username').text();
-        let message = $('#message').val();
+        let currentUser = JSON.parse(window.localStorage.getItem('current_user')),
+            username = currentUser ? currentUser.username : 'Anonymous',
+            message = $('#message').val();
 
         if (username == '' || $.trim(message) == '') {
             alert('Please enter name and message!!');
@@ -19,10 +22,8 @@ $(function () {
         socket.emit('react message', { messageId, reaction });
     }
 
-    const getCurrentTime = function () {
-        let dt = new Date($.now())
-
-        return `${dt.getHours()}:${dt.getMinutes()}`
+    const scrollToBottom = function () {
+        $('#messages')[0].scrollTop = $('#messages')[0].scrollHeight
     }
 
     const generateElementId = function (name, id) {
@@ -38,45 +39,35 @@ $(function () {
         $(`#${lineMessageId}`).replaceWith(messageTextDeleted)
     }
 
-    var socket = io.connect('http://localhost:3000');
-
     socket.on("new message", function (data) {
-        let lineMessageId = generateElementId('line-message', data.id),
-            messageId = generateElementId('message', data.id),
-            moreId = generateElementId('more', data.id),
-            actionBoxId = generateElementId('action-box', data.id),
-            moreDropdownListId = generateElementId('more-dropdown-list', data.id),
-            buttonReactionId = generateElementId('button-reaction', data.id),
-            reactionsId = generateElementId('reaction', data.id),
-            reactionIconList = generateElementId('reaction-icon', data.id),
-            messageText = `<div class='line-message' id=${lineMessageId}><div class='message-container' id=${messageId}>`
-                + `<div class='message-header'><span class='username'>${data.username}</span> <span class='time'>(${getCurrentTime()}):</span></div>`
-                + `<div class='message-content'>${data.message}</div></div>`,
-            messageActionBlock = `<div class='action-box' id=${actionBoxId}>`
-                + `<button class='reaction' title='Add reaction' id=${buttonReactionId}><i class='smile outline icon'></i></button>`
-                + `<div class='reaction-icon-list' id=${reactionIconList}>`
-                + "<div class='emoji like'><div class='icon' data-title='Like'></div></div><div class='emoji love'><div class='icon' data-title='Love'></div></div>"
-                + "<div class='emoji haha'><div class='icon' data-title='Haha'></div></div><div class='emoji wow'><div class='icon' data-title='Wow'></div></div>"
-                + "<div class='emoji sad'><div class='icon' data-title='Sad'></div></div><div class='emoji angry'><div class='icon' data-title='Angry'></div></div>"
-                + "</div>"
-                + `<button class='more' id=${moreId} title='More'><i class='ellipsis vertical icon'></i></button>`
-                + `<div class='more-dropdown-list' id=${moreDropdownListId}>`
-                + "<div class='reaction'>Add reaction</div><div class='edit'><i class='edit icon'></i>Edit</div><div class='delete'><i class='trash icon'></i>Delete</div></div>"
-                + "</div>",
-            messageReactionsBlock = `<div class='reactions' id=${reactionsId}></div>`
-        messageBlock = messageText + messageActionBlock + messageReactionsBlock + "</div>"
+        let lineMessageId = generateElementId('message', data.id),
+            messageId = generateElementId('message__container', data.id),
+            actionBoxId = generateElementId('message__action', data.id),
+            buttonReactionId = generateElementId('message__reactionbutton', data.id),
+            reactionIconList = generateElementId('message__reactionlist', data.id),
+            moreId = generateElementId('message__morebutton', data.id),
+            moreDropdownListId = generateElementId('message__dropdownlist', data.id),
+            reactionsId = generateElementId('message__reactions', data.id),
+            messageTemplateElm = $('#message-template'),
+            messagesElm = $('#messages')
 
         if (data.isEdit) {
-            $(`#${messageId} .message-content`).text(data.message)
+            $(`#${messageId} .message__content`).text(data.message)
         } else {
-            $("#content").append(messageBlock)
+            const html = Mustache.render(messageTemplateElm.html(), {
+                id: data.id,
+                username: data.username,
+                message: data.message,
+                createdAt: moment(data.createdAt).format('h:mm a')
+            })
+        
+            messagesElm.append(html)
         }
-
 
         let moreButtonElement = $(`#${moreDropdownListId}`),
             lineMessageElement = $(`#${lineMessageId}`),
             actionBoxElement = $(`#${actionBoxId}`),
-            messageContentElement = $(`#${messageId} .message-content`),
+            messageContentElement = $(`#${messageId} .message__content`),
             reactionIconListElement = $(`#${reactionIconList}`)
 
         if (!data.isEdit) {
@@ -84,7 +75,7 @@ $(function () {
                 if (moreButtonElement.css('display') == 'none') {
                     isShowMoreDropdownList = true
                     moreButtonElement.show()
-                    actionBoxElement.css('display', 'inline-block')
+                    actionBoxElement.css('display', 'flex')
                     lineMessageElement.css('background-color', '#F2F3F5')
                 } else {
                     isShowMoreDropdownList = false
@@ -103,20 +94,20 @@ $(function () {
                 moreButtonElement.hide()
                 lineMessageElement.css('background-color', '#FFF6D6')
                 $("#message").val(messageContentElement.text()).css('background-color', '#FFF6D6')
-                editMessageId = getMessageIdFromElementId('message-', messageId)
+                editMessageId = getMessageIdFromElementId('message__container-', messageId)
             })
 
-            $(`#${lineMessageId}`).hover(function () {
-                if (!isShowMoreDropdownList && !isShowReactionList) {
-                    $(this).css('background-color', '#F2F3F5')
-                    $(this).find('.action-box').css('display', 'inline-block')
-                }
-            }, function () {
-                if (!isShowMoreDropdownList && !isShowReactionList) {
-                    $(this).css('background-color', '')
-                    $(this).find('.action-box').css('display', 'none')
-                }
-            })
+            // $(`#${lineMessageId}`).hover(function () {
+            //     if (!isShowMoreDropdownList && !isShowReactionList) {
+            //         $(this).css('background-color', '#F2F3F5')
+            //         $(this).find('.message__action').css('display', 'flex')
+            //     }
+            // }, function () {
+            //     if (!isShowMoreDropdownList && !isShowReactionList) {
+            //         $(this).css('background-color', '')
+            //         $(this).find('.message__action').css('display', 'none')
+            //     }
+            // })
 
             $(`#${buttonReactionId}`).on("click", function () {
                 const newOpacity = isShowReactionList ? 0 : 1;
@@ -126,16 +117,18 @@ $(function () {
             })
 
             $(`#${reactionIconList} div.icon`).on("click", function () {
-                let messageId = getMessageIdFromElementId('reaction-icon-', reactionIconList)
+                let messageId = getMessageIdFromElementId('message__reactionlist-', reactionIconList)
                 reactMessage(messageId, $(this).attr("data-title").toLowerCase())
             })
         }
+
+        scrollToBottom()
     })
 
     socket.on('update reactions', (data) => {
         const { messageId, reactions } = data;
-        let reactionsId = generateElementId('reaction', messageId),
-            reactionIconList = generateElementId('reaction-icon', messageId),
+        let reactionsId = generateElementId('message__reactions', messageId),
+            reactionIconList = generateElementId('message__reactionlist', messageId),
             reactionsElement = $(`#${reactionsId}`),
             reactionIconListElement = $(`#${reactionIconList}`)
 
@@ -154,10 +147,11 @@ $(function () {
         }
     });
 
-    $("#sendMessage").on('click', function () {
+    $("#message-form").on('submit', function (e) {
+        e.preventDefault()
         sendMessage()
         if (editMessageId) {
-            $('.line-message').css('background-color', '')
+            $('.message').css('background-color', '')
             $("#message").css('background-color', '')
             editMessageId = ''
         }

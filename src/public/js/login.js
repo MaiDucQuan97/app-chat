@@ -17,6 +17,8 @@ $(function () {
             success: function (response) {
                 console.log(response)
                 alert('Login successful!');
+                window.localStorage.setItem('current_user', JSON.stringify(response.user))
+                window.localStorage.setItem('is_logged_in', response.isLoggedIn)
                 window.location.href = '/index'
             },
             error: function (xhr, status, error) {

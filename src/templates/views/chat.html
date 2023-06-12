@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Chat realtime NodeJS demo</title>
+
+    <link rel="stylesheet" href="/css/chat.css">
+    <link rel="stylesheet" href="/css/reaction-icon.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/3.0.1/mustache.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qs/6.6.0/qs.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/chat.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.5.0/semantic.min.css"
+        integrity="sha512-KXol4x3sVoO+8ZsWPFI/r5KBVB/ssCGB5tsv2nVOKwLg33wTFP3fmnXa47FdSVIshVTgsYk/1734xSk9aFIa4A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+
+<body>
+    <div class="chat">
+        <div class="chat__navbar">
+            <div class="menu">
+                <a href="/index">Homepage</a>
+                <a href="/login">Login</a>
+                <a href="/signup">Signup</a>
+            </div>
+            <div id="logout-btn">
+                <button>Logout</button>
+            </div>
+        </div>
+        <div class="chat__sidebar">
+
+        </div>
+        <div class="chat__main">
+            <div id="messages" class="chat__messages"></div>
+
+            <div class="compose">
+                <form id="message-form">
+                    <input name="message" id="message" placeholder="Message" autocomplete="false"/>
+                    <button>Send</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script id="message-template" type="x-tmpl-mustache">
+        <div class="message" id="message-{{id}}">
+            <div class="message__container" id="message__container-{{id}}">
+                <div class="message__header">
+                    <span class="message__username">{{username}}</span>
+                    <span class="message__meta">{{createdAt}}</span>
+                </div>
+                <div class="message__content">{{message}}</div>
+            </div>
+            <div class="message__action" id="message__action-{{id}}">
+                <button class="message__reactionbutton" title="Add reaction" id="message__reactionbutton-{{id}}">
+                    <i class="smile outline icon"></i>
+                </button>
+                <div class="message__reactionlist" id="message__reactionlist-{{id}}">
+                    <div class="emoji like">
+                        <div class="icon" data-title="Like"></div>
+                    </div>
+                    <div class="emoji love">
+                        <div class="icon" data-title="Love"></div>
+                    </div>
+                    <div class="emoji haha">
+                        <div class="icon" data-title="Haha"></div>
+                    </div>
+                    <div class="emoji wow">
+                        <div class="icon" data-title="Wow"></div>
+                    </div>
+                    <div class="emoji sad">
+                        <div class="icon" data-title="Sad"></div>
+                    </div>
+                    <div class="emoji angry">
+                        <div class="icon" data-title="Angry"></div>
+                    </div>
+                </div>
+                <button class="message__morebutton" id="message__morebutton-{{id}}" title="More">
+                    <i class="ellipsis vertical icon"></i>
+                </button>
+                <div class="message__dropdownlist" id="message__dropdownlist-{{id}}">
+                    <div class="reaction">Add reaction</div>
+                    <div class="edit">
+                        <i class="edit icon"></i>Edit
+                    </div>
+                    <div class="delete">
+                        <i class="trash icon"></i>Delete
+                    </div>
+                </div>
+            </div>
+            <div class="message__reactions" id="message__reactions-{{id}}"></div>
+        </div>
+    </script>
+</body>
+
+</html>

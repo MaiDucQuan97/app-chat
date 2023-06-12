@@ -5,17 +5,15 @@ const auth = require("../middleware/auth")
 const isLoggedIn = require('../middleware/isLoggedIn')
 
 router.get("/index", auth, function (req, res) {
-    res.render('chat', {
-        username: req.session.user.username
-    })
+    res.sendFile(path.join(__dirname + '/../templates/views/chat.html'));
 });
 
 router.get("/login", isLoggedIn, function (req, res) {
-    res.render('login')
+    res.sendFile(path.join(__dirname + '/../templates/views/login.html'));
 })
 
 router.get("/signup", isLoggedIn, function (req, res) {
-    res.render('signup')
+    res.sendFile(path.join(__dirname + '/../templates/views/signup.html'));
 })
 
 module.exports = router
