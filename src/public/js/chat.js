@@ -1,14 +1,19 @@
 $(function () {
     let isShowMoreDropdownList = false,
         isShowReactionList = false,
-        editMessageId = ''
+        editMessageId = '',
+        currentUser = JSON.parse(window.localStorage.getItem('current_user')),
+        username = currentUser ? currentUser.username : 'Anonymous'
 
-    const socket = io()
+    const URL = "http://localhost:3000";
+    const socket = io(URL, { 
+        query: {
+            username: username
+        } 
+    });
 
     const sendMessage = function () {
-        let currentUser = JSON.parse(window.localStorage.getItem('current_user')),
-            username = currentUser ? currentUser.username : 'Anonymous',
-            message = $('#message').val();
+        let message = $('#message').val()
 
         if (username == '' || $.trim(message) == '') {
             alert('Please enter name and message!!');
@@ -146,6 +151,10 @@ $(function () {
             isShowReactionList = false
         }
     });
+
+    socket.on('users', (data) => {
+        console.log(data)
+    })
 
     $("#message-form").on('submit', function (e) {
         e.preventDefault()

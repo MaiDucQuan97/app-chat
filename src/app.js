@@ -33,7 +33,25 @@ app.use(routeUser)
 app.use(routePage)
 app.use(express.static('src/public'));
 
+io.use((socket, next) => {
+    const username = socket.handshake.query.username;
+    if (!username) {
+      return next(new Error("invalid username"));
+    }
+    socket.username = username;
+    next();
+});
+
 io.on('connection', function (socket) {
+    const users = [];
+    for (let [id, socket] of io.of("/").sockets) {
+      users.push({
+        userID: id,
+        username: socket.username,
+      });
+    }
+    socket.emit("users", users);
+
     socket.on('send message', function (data) {
         const messageId = (!data.id) ? generateMessageId() : data.id
         let message = {}

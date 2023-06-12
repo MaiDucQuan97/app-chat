@@ -15,7 +15,6 @@ $(function () {
             contentType: "application/json; charset=utf-8",
             dataType: "json",
             success: function (response) {
-                console.log(response)
                 alert('Login successful!');
                 window.localStorage.setItem('current_user', JSON.stringify(response.user))
                 window.localStorage.setItem('is_logged_in', response.isLoggedIn)
