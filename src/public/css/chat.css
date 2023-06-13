@@ -42,10 +42,10 @@
     z-index: 10;
 }
 
-.message:hover .message__action {
+/* .message:hover .message__action {
     display: flex;
     background-color: #f2f3f5;
-}
+} */
 
 .message__dropdownlist {
     display: none;
@@ -277,8 +277,24 @@ button:disabled {
     padding: 12px 24px 0 24px;
 }
 
+/* user list */
 .users {
     list-style-type: none;
     font-weight: 300;
     padding: 12px 24px 0 24px;
+}
+.online {
+    color: green;
+}
+.fas.fa-circle {
+    font-size: 10px;
+}
+.user {
+    margin: 5px 10px;
+    cursor: pointer;
+    padding: 10px;
+}
+.user:hover {
+  background-color: lightgray;
+  border-radius: 5px;
 }

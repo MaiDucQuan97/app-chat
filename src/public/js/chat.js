@@ -3,14 +3,17 @@ $(function () {
         isShowReactionList = false,
         editMessageId = '',
         currentUser = JSON.parse(window.localStorage.getItem('current_user')),
-        username = currentUser ? currentUser.username : 'Anonymous'
+        username = currentUser ? currentUser.username : 'Anonymous',
+        userList = [],
+        selectedUserId = ''
 
     const URL = "http://localhost:3000";
-    const socket = io(URL, { 
+    const socket = io(URL, {
         query: {
             username: username
-        } 
+        }
     });
+
 
     const sendMessage = function () {
         let message = $('#message').val()
@@ -18,7 +21,16 @@ $(function () {
         if (username == '' || $.trim(message) == '') {
             alert('Please enter name and message!!');
         } else {
-            socket.emit('send message', { username: username, message: message, id: editMessageId });
+            if (!selectedUserId && userList.length !== 0) {
+                selectedUserId = userList[0].userID
+            }
+
+            socket.emit('send message', {
+                username,
+                message,
+                id: editMessageId,
+                to: selectedUserId
+            });
             $('#message').val('');
         }
     }
@@ -65,7 +77,7 @@ $(function () {
                 message: data.message,
                 createdAt: moment(data.createdAt).format('h:mm a')
             })
-        
+
             messagesElm.append(html)
         }
 
@@ -102,17 +114,17 @@ $(function () {
                 editMessageId = getMessageIdFromElementId('message__container-', messageId)
             })
 
-            // $(`#${lineMessageId}`).hover(function () {
-            //     if (!isShowMoreDropdownList && !isShowReactionList) {
-            //         $(this).css('background-color', '#F2F3F5')
-            //         $(this).find('.message__action').css('display', 'flex')
-            //     }
-            // }, function () {
-            //     if (!isShowMoreDropdownList && !isShowReactionList) {
-            //         $(this).css('background-color', '')
-            //         $(this).find('.message__action').css('display', 'none')
-            //     }
-            // })
+            $(`#${lineMessageId}`).hover(function () {
+                if (!isShowMoreDropdownList && !isShowReactionList) {
+                    $(this).css('background-color', '#F2F3F5')
+                    $(this).find('.message__action').css('display', 'flex')
+                }
+            }, function () {
+                if (!isShowMoreDropdownList && !isShowReactionList) {
+                    $(this).css('background-color', '')
+                    $(this).find('.message__action').css('display', 'none')
+                }
+            })
 
             $(`#${buttonReactionId}`).on("click", function () {
                 const newOpacity = isShowReactionList ? 0 : 1;
@@ -152,8 +164,31 @@ $(function () {
         }
     });
 
-    socket.on('users', (data) => {
-        console.log(data)
+    socket.on('users', (users) => {
+        users.forEach((user) => {
+            user.self = user.userID === socket.id;
+        });
+
+        userList = users = users.sort((a, b) => {
+            if (a.self) return -1;
+            if (b.self) return 1;
+            if (a.username < b.username) return -1;
+            return a.username > b.username ? 1 : 0;
+        });
+
+        let userTemplateElm = $('#user-template'),
+            userListElm = $('#user-list')
+
+        const html = Mustache.render(userTemplateElm.html(), { users: users })
+
+        userListElm.empty()
+        userListElm.append(html)
+
+        $('#user-list .user').on('click', function (e) {
+            e.preventDefault()
+            selectedUserId = $(this).attr('id')
+            $('#messages').empty()
+        })
     })
 
     $("#message-form").on('submit', function (e) {

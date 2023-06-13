@@ -36,7 +36,7 @@ app.use(express.static('src/public'));
 io.use((socket, next) => {
     const username = socket.handshake.query.username;
     if (!username) {
-      return next(new Error("invalid username"));
+        return next(new Error("invalid username"));
     }
     socket.username = username;
     next();
@@ -45,12 +45,13 @@ io.use((socket, next) => {
 io.on('connection', function (socket) {
     const users = [];
     for (let [id, socket] of io.of("/").sockets) {
-      users.push({
-        userID: id,
-        username: socket.username,
-      });
+        users.push({
+            userID: id,
+            username: socket.username,
+            online: true
+        });
     }
-    socket.emit("users", users);
+    io.emit("users", users);
 
     socket.on('send message', function (data) {
         const messageId = (!data.id) ? generateMessageId() : data.id
@@ -64,7 +65,8 @@ io.on('connection', function (socket) {
             message.isEdit = true
         }
 
-        io.sockets.emit('new message', message);
+        // io.sockets.emit('new message', message);
+        io.to(data.to).emit('new message', message)
     });
 
     socket.on('react message', (data) => {
@@ -83,6 +85,22 @@ io.on('connection', function (socket) {
 
             io.emit('update reactions', { messageId, reactions: message.reactions });
         }
+    });
+
+    socket.on("connect", () => {
+        users.forEach((user) => {
+            if (user.self) {
+                user.online = true;
+            }
+        });
+    });
+
+    socket.on("disconnect", () => {
+        users.forEach((user) => {
+            if (user.self) {
+                user.online = false;
+            }
+        });
     });
 });
 
