@@ -2,32 +2,24 @@ $(function () {
     let isShowMoreDropdownList = false,
         isShowReactionList = false,
         editMessageId = '',
-        currentUser = JSON.parse(window.localStorage.getItem('current_user')),
-        username = currentUser ? currentUser.username : 'Anonymous',
         userList = [],
-        selectedUserId = ''
+        selectedUserId = '',
+        currentUserId = ''
 
-    const URL = "http://localhost:3000";
-    const socket = io(URL, {
-        query: {
-            username: username
-        }
-    });
-
+    const socket = io();
 
     const sendMessage = function () {
-        let message = $('#message').val()
+        let messageValue = $('#message').val()
 
-        if (username == '' || $.trim(message) == '') {
+        if ($.trim(message) == '') {
             alert('Please enter name and message!!');
         } else {
             if (!selectedUserId && userList.length !== 0) {
-                selectedUserId = userList[0].userID
+                selectedUserId = userList[0].id
             }
-
+    
             socket.emit('send message', {
-                username,
-                message,
+                message: messageValue,
                 id: editMessageId,
                 to: selectedUserId
             });
@@ -56,26 +48,31 @@ $(function () {
         $(`#${lineMessageId}`).replaceWith(messageTextDeleted)
     }
 
-    socket.on("new message", function (data) {
-        let lineMessageId = generateElementId('message', data.id),
-            messageId = generateElementId('message__container', data.id),
-            actionBoxId = generateElementId('message__action', data.id),
-            buttonReactionId = generateElementId('message__reactionbutton', data.id),
-            reactionIconList = generateElementId('message__reactionlist', data.id),
-            moreId = generateElementId('message__morebutton', data.id),
-            moreDropdownListId = generateElementId('message__dropdownlist', data.id),
-            reactionsId = generateElementId('message__reactions', data.id),
+    socket.on("new message", function ({messageData, from, to}) {
+        const id = messageData.id,
+              isEdit = messageData.isEdit,
+              message = messageData.message,
+              username = messageData.username,
+              createdAt = messageData.createdAt
+
+        let lineMessageId = generateElementId('message', id),
+            messageId = generateElementId('message__container', id),
+            actionBoxId = generateElementId('message__action', id),
+            buttonReactionId = generateElementId('message__reactionbutton', id),
+            reactionIconList = generateElementId('message__reactionlist', id),
+            moreId = generateElementId('message__morebutton', id),
+            moreDropdownListId = generateElementId('message__dropdownlist', id),
             messageTemplateElm = $('#message-template'),
             messagesElm = $('#messages')
 
-        if (data.isEdit) {
-            $(`#${messageId} .message__content`).text(data.message)
+        if (isEdit) {
+            $(`#${messageId} .message__content`).text(message)
         } else {
             const html = Mustache.render(messageTemplateElm.html(), {
-                id: data.id,
-                username: data.username,
-                message: data.message,
-                createdAt: moment(data.createdAt).format('h:mm a')
+                id: id,
+                username,
+                message,
+                createdAt: moment(createdAt).format('h:mm a')
             })
 
             messagesElm.append(html)
@@ -87,7 +84,7 @@ $(function () {
             messageContentElement = $(`#${messageId} .message__content`),
             reactionIconListElement = $(`#${reactionIconList}`)
 
-        if (!data.isEdit) {
+        if (!isEdit) {
             $(`#${moreId}`).on("click", function () {
                 if (moreButtonElement.css('display') == 'none') {
                     isShowMoreDropdownList = true
@@ -165,13 +162,9 @@ $(function () {
     });
 
     socket.on('users', (users) => {
-        users.forEach((user) => {
-            user.self = user.userID === socket.id;
-        });
-
-        userList = users = users.sort((a, b) => {
-            if (a.self) return -1;
-            if (b.self) return 1;
+        userList = this.users = users.sort((a, b) => {
+            if (currentUserId && a.id === currentUserId) return -1;
+            if (currentUserId && b.id === currentUserId) return 1;
             if (a.username < b.username) return -1;
             return a.username > b.username ? 1 : 0;
         });
@@ -190,6 +183,11 @@ $(function () {
             $('#messages').empty()
         })
     })
+
+    socket.on('current_user_id', (userID) => {
+        currentUserId = userID;
+        console.log(currentUserId)
+    });
 
     $("#message-form").on('submit', function (e) {
         e.preventDefault()
