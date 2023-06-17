@@ -25,7 +25,6 @@ $(function () {
             dataType: "json",
             success: function (response) {
                 console.log(response)
-                alert('Signup successful!')
                 window.location.href = '/login'
             },
             error: function (xhr, status, error) {
