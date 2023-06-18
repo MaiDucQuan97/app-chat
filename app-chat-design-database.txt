@@ -1,0 +1,27 @@
+--- user
+- _id
+- username
+- email
+- password
+- avatar
+- createdAt
+- updatedAt
+
+--- message
+- messageId
+- previousId
+- nextId
+- content
+- senderUserID
+- recipientUserID
+- username
+- sentAt
+- reactions: [{
+	reaction: {
+		reactionType,
+		userID,
+		reactionTime
+	}
+}]
+- createdAt
+- updatedAt

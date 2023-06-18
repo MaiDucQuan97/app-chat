@@ -98,7 +98,7 @@
     <script id="user-template" type="text/template">
         {{#users}}
         <li class="user" id={{id}}>
-            {{username}} <br/>
+            <span>{{username}}</span> <br/>
             <i class="{{#online}}fas fa-circle online{{/online}}{{^online}}fas fa-circle offline{{/online}}"></i>&nbsp&nbsp{{#online}}online{{/online}}{{^online}}offline{{/online}}
         </li>
         {{/users}}

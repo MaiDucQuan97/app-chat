@@ -4,6 +4,7 @@ $(function () {
         editMessageId = '',
         userList = [],
         selectedUserId = '',
+        selectedUsername = '',
         currentUserId = ''
 
     const socket = io();
@@ -11,17 +12,19 @@ $(function () {
     const sendMessage = function () {
         let messageValue = $('#message').val()
 
-        if ($.trim(message) == '') {
+        if ($.trim(messageValue) == '') {
             alert('Please enter name and message!!');
         } else {
             if (!selectedUserId && userList.length !== 0) {
                 selectedUserId = userList[0].id
+                selectedUsername = userList[0].username
             }
-    
+
             socket.emit('send message', {
                 message: messageValue,
                 id: editMessageId,
-                to: selectedUserId
+                toId: selectedUserId,
+                toUsername: selectedUsername
             });
             $('#message').val('');
         }
@@ -48,12 +51,12 @@ $(function () {
         $(`#${lineMessageId}`).replaceWith(messageTextDeleted)
     }
 
-    socket.on("new message", function ({messageData, from, to}) {
+    socket.on("new message", function ({ messageData, from, to }) {
         const id = messageData.id,
-              isEdit = messageData.isEdit,
-              message = messageData.message,
-              username = messageData.username,
-              createdAt = messageData.createdAt
+            isEdit = messageData.isEdit,
+            message = messageData.message,
+            username = messageData.username,
+            createdAt = messageData.createdAt
 
         let lineMessageId = generateElementId('message', id),
             messageId = generateElementId('message__container', id),
@@ -180,6 +183,7 @@ $(function () {
         $('#user-list .user').on('click', function (e) {
             e.preventDefault()
             selectedUserId = $(this).attr('id')
+            selectedUsername = $(this).find('span').text()
             $('#messages').empty()
         })
     })
@@ -205,7 +209,6 @@ $(function () {
             url: '/user/logout',
             success: function (response) {
                 console.log(response)
-                alert('Logout successful!');
                 window.location.href = '/login'
             },
             error: function (xhr, status, error) {
