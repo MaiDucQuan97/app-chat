@@ -26,9 +26,6 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    socket_id: {
-        type: String
-    },
     tokens: [{
         token: {
             type: String,
