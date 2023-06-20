@@ -5,6 +5,7 @@ const path = require('path');
 const socketio = require('socket.io')
 const http = require('http')
 const { generateMessage, generateMessageId } = require('./utils/messages')
+const Message = require('./models/message')
 
 const app = express();
 const server = http.createServer(app)
@@ -65,7 +66,7 @@ io.on('connection', function (socket) {
     emitCurrentUserId(socket.userID)
     emitUserList()
 
-    socket.on('send message', function (data) {
+    socket.on('send message', async function (data) {
         const messageId = (!data.id) ? generateMessageId() : data.id
         let messageData = {}
 
@@ -78,16 +79,19 @@ io.on('connection', function (socket) {
             messageData.isEdit = true
         }
 
-        io.to(socket.userID).emit('new message', {
+        if (data.toId !== socket.userID) {
+            await io.to(socket.userID).emit('new message', {
+                messageData,
+                from: socket.userID,
+                to: data.toId
+            })
+        }
+        await io.to(data.toId).emit('new message', {
             messageData,
             from: socket.userID,
-            to: data.to
+            to: data.toId
         })
-        io.to(data.to).emit('new message', {
-            messageData,
-            from: socket.userID,
-            to: data.to
-        })
+        await storeMessage({ messageData, recipientUsername: data.toUsername })
     });
 
     socket.on('react message', (data) => {
@@ -122,6 +126,36 @@ function emitUserList() {
 
 function emitCurrentUserId(userID) {
     io.to(userID).emit('current_user_id', userID)
+}
+
+async function storeMessage({ messageData, recipientUsername }) {
+    try {
+        let currentMessageData = {
+            messageId: messageData.id,
+            content: messageData.message,
+            senderUsername: messageData.username,
+            recipientUsername,
+            previousId: '',
+            nextId: ''
+        }
+
+        let previousMessage = await Message.getNewestMessageOfCurrentUser(messageData.username, recipientUsername)
+
+        if (previousMessage) {
+            currentMessageData.previousId = previousMessage._id.toString()
+        }
+        
+        const message = await Message(currentMessageData)
+
+        await message.save()
+
+        if (previousMessage) {
+            previousMessage.nextId = message._id.toString()
+            await previousMessage.save()
+        }
+    } catch (error) {
+        console.log(error)
+    }
 }
 
 server.listen(port, () => {
