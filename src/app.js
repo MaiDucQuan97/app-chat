@@ -86,13 +86,13 @@ io.on('connection', function (socket) {
                 to: data.toId
             })
         }
-        
         await io.to(data.toId).emit('new message', {
             messageData,
             from: socket.userID,
             to: data.toId
         })
         await storeMessage({messageId, messageData, senderUsername: socket.username, recipientUsername: data.toUsername})
+        await storeMessage({ messageId, messageData, senderUsername: socket.username, recipientUsername: data.toUsername })
     });
 
     socket.on('react message', (data) => {
@@ -129,9 +129,17 @@ function emitCurrentUserId(userID) {
     io.to(userID).emit('current_user_id', userID)
 }
 
-async function storeMessage({messageId, messageData, senderUsername, recipientUsername}) {
+async function storeMessage({ messageId, messageData, senderUsername, recipientUsername }) {
     try {
-        const message = await Message(data)
+        let previousMessage = awaitMessage.getNewestMessageOfCurrentUser({senderUsername, recipientUsername})
+
+        let currentMessageData = {
+            messageId,
+            content: messageData,
+            senderUsername,
+            recipientUsername
+        }
+        const message = await Message(currentMessageData)
 
         await message.save()
         res.send(message)

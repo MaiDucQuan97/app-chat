@@ -8,13 +8,13 @@
 - updatedAt
 
 --- message
-- messageID
+
+- messageId
 - previousId
 - nextId
 - content
-- senderUserID
-- recipientUserID
-- username
+- senderUsername
+- recipientUsername
 - sentAt
 - reactions: [{
 	reaction: {

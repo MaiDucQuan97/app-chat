@@ -19,7 +19,7 @@ $(function () {
                 selectedUserId = userList[0].id
                 selectedUsername = userList[0].username
             }
-    
+
             socket.emit('send message', {
                 message: messageValue,
                 id: editMessageId,
@@ -51,12 +51,12 @@ $(function () {
         $(`#${lineMessageId}`).replaceWith(messageTextDeleted)
     }
 
-    socket.on("new message", function ({messageData, from, to}) {
+    socket.on("new message", function ({ messageData, from, to }) {
         const id = messageData.id,
-              isEdit = messageData.isEdit,
-              message = messageData.message,
-              username = messageData.username,
-              createdAt = messageData.createdAt
+            isEdit = messageData.isEdit,
+            message = messageData.message,
+            username = messageData.username,
+            createdAt = messageData.createdAt
 
         let lineMessageId = generateElementId('message', id),
             messageId = generateElementId('message__container', id),
