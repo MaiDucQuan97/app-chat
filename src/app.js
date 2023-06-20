@@ -91,8 +91,7 @@ io.on('connection', function (socket) {
             from: socket.userID,
             to: data.toId
         })
-        await storeMessage({messageId, messageData, senderUsername: socket.username, recipientUsername: data.toUsername})
-        await storeMessage({ messageId, messageData, senderUsername: socket.username, recipientUsername: data.toUsername })
+        await storeMessage({ messageData, recipientUsername: data.toUsername })
     });
 
     socket.on('react message', (data) => {
@@ -129,22 +128,33 @@ function emitCurrentUserId(userID) {
     io.to(userID).emit('current_user_id', userID)
 }
 
-async function storeMessage({ messageId, messageData, senderUsername, recipientUsername }) {
+async function storeMessage({ messageData, recipientUsername }) {
     try {
-        let previousMessage = awaitMessage.getNewestMessageOfCurrentUser({senderUsername, recipientUsername})
-
         let currentMessageData = {
-            messageId,
-            content: messageData,
-            senderUsername,
-            recipientUsername
+            messageId: messageData.id,
+            content: messageData.message,
+            senderUsername: messageData.username,
+            recipientUsername,
+            previousId: '',
+            nextId: ''
         }
+
+        let previousMessage = await Message.getNewestMessageOfCurrentUser(messageData.username, recipientUsername)
+
+        if (previousMessage) {
+            currentMessageData.previousId = previousMessage._id.toString()
+        }
+        
         const message = await Message(currentMessageData)
 
         await message.save()
-        res.send(message)
+
+        if (previousMessage) {
+            previousMessage.nextId = message._id.toString()
+            await previousMessage.save()
+        }
     } catch (error) {
-        res.status(400).send(error)
+        console.log(error)
     }
 }
 

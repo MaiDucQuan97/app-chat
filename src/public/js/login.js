@@ -15,7 +15,6 @@ $(function () {
             contentType: "application/json; charset=utf-8",
             dataType: "json",
             success: function (response) {
-                alert('Login successful!');
                 window.location.href = '/index'
             },
             error: function (xhr, status, error) {

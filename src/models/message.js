@@ -8,13 +8,11 @@ const messageSchema = new mongoose.Schema({
     },
     previousId: {
         type: String,
-        require: true,
-        unique: true
+        require: true
     },
     nextId: {
         type: String,
-        require: true,
-        unique: true
+        require: true
     },
     content: {
         type: String,
@@ -24,13 +22,11 @@ const messageSchema = new mongoose.Schema({
     senderUsername: {
         type: String,
         required: true,
-        unique: true,
         trim: true
     },
     recipientUsername: {
         type: String,
         required: true,
-        unique: true,
         trim: true
     },
     sentAt: {
@@ -66,10 +62,10 @@ messageSchema.statics.getAllMessagesOfCurrentUser = async function (senderUserna
 }
 
 messageSchema.statics.getNewestMessageOfCurrentUser = async function (senderUsername, recipientUsername) {
-    const latestMessage = await Message.findOne({ senderUsername, recipientUsername }).sort({ sentAt: -1 }).limit(1)
+    let latestMessage = await Message.findOne({ senderUsername, recipientUsername }).sort({ sentAt: -1 }).limit(1)
 
     if (!latestMessage) {
-        throw new Error('Message does not exist.')
+        latestMessage = await Message.findOne({ senderUsername: recipientUsername, recipientUsername: senderUsername}).sort({ sentAt: -1 }).limit(1)
     }
 
     return latestMessage
