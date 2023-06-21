@@ -144,7 +144,7 @@ async function storeMessage({ messageData, recipientUsername }) {
         if (previousMessage) {
             currentMessageData.previousId = previousMessage._id.toString()
         }
-        
+
         const message = await Message(currentMessageData)
 
         await message.save()

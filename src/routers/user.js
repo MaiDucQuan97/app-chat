@@ -1,5 +1,6 @@
 const express = require('express')
 const User = require('../models/user')
+const Message = require('../models/message')
 const auth = require('../middleware/auth')
 const router = express.Router()
 
@@ -77,6 +78,17 @@ router.delete('/user/me/avatar', auth, async (req, res) => {
     req.user.avatar = undefined
     await req.user.save()
     res.send(req.user)
+})
+
+router.get('/user/me/messages', auth, async (req, res) => {
+    try {
+        let user = req.session.user,
+            messages = await Message.getAllMessagesOfCurrentUser(user.username, req.query.recipientUsername)
+
+        res.send(messages)
+    } catch (error) {
+        res.status(400).send(error)
+    }
 })
 
 module.exports = router

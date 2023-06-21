@@ -181,16 +181,45 @@ $(function () {
         userListElm.append(html)
 
         $('#user-list .user').on('click', function (e) {
+            let messageTemplateElm = $('#message-template'),
+                messagesElm = $('#messages'),
+                messagesHtml = ''
+
             e.preventDefault()
             selectedUserId = $(this).attr('id')
             selectedUsername = $(this).find('span').text()
-            $('#messages').empty()
+
+            messagesElm.empty()
+            $.ajax({
+                type: 'GET',
+                url: '/user/me/messages',
+                data: {
+                    recipientUsername: selectedUsername
+                },
+                success: function (response) {
+                    if (response.length !== 0) {
+                        response.forEach((message) => {
+                            messagesHtml += Mustache.render(messageTemplateElm.html(), {
+                                id: message.messageId,
+                                username: message.senderUsername,
+                                message: message.content,
+                                createdAt: moment(message.sentAt).format('h:mm a')
+                            })
+                        })
+
+                        messagesElm.append(messagesHtml)
+                        scrollToBottom()
+                    }
+                },
+                error: function (xhr, status, error) {
+                    alert(error);
+                }
+            });
         })
     })
 
     socket.on('current_user_id', (userID) => {
         currentUserId = userID;
-        console.log(currentUserId)
     });
 
     $("#message-form").on('submit', function (e) {
@@ -208,11 +237,9 @@ $(function () {
             type: 'POST',
             url: '/user/logout',
             success: function (response) {
-                console.log(response)
                 window.location.href = '/login'
             },
             error: function (xhr, status, error) {
-                console.log(xhr.responseText)
                 alert('Logout failed. Please try again.');
             }
         });
