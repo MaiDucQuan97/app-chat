@@ -52,10 +52,20 @@ const messageSchema = new mongoose.Schema({
 })
 
 messageSchema.statics.getAllMessagesOfCurrentUser = async function (senderUsername, recipientUsername) {
-    const messages = await Message.find({ senderUsername, recipientUsername }).sort({ sentAt: -1 })
+    let messages = []
 
-    if (messages.length === 0) {
-        throw new Error('No messages found.')
+    if (senderUsername !== recipientUsername) {
+        messages = await Message.find({
+            $or: [
+                { senderUsername: recipientUsername, recipientUsername: senderUsername },
+                { senderUsername, recipientUsername }
+            ]
+        }).sort({ sentAt: 1 })
+    } else {
+        messages = await Message.find({
+            senderUsername,
+            recipientUsername
+        }).sort({ sentAt: 1 })
     }
 
     return messages
@@ -64,8 +74,11 @@ messageSchema.statics.getAllMessagesOfCurrentUser = async function (senderUserna
 messageSchema.statics.getNewestMessageOfCurrentUser = async function (senderUsername, recipientUsername) {
     let latestMessage = await Message.findOne({ senderUsername, recipientUsername }).sort({ sentAt: -1 }).limit(1)
 
-    if (!latestMessage) {
-        latestMessage = await Message.findOne({ senderUsername: recipientUsername, recipientUsername: senderUsername}).sort({ sentAt: -1 }).limit(1)
+    if (!latestMessage && senderUsername !== recipientUsername) {
+        latestMessage = await Message.findOne({
+            senderUsername: recipientUsername,
+            recipientUsername: senderUsername
+        }).sort({ sentAt: -1 }).limit(1)
     }
 
     return latestMessage
