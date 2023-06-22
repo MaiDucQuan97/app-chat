@@ -64,6 +64,7 @@ const upload = multer({
     }
 })
 
+// todo: update api to upload user avatar -> show avatar in chat page
 router.post('/user/me/avatar', auth, upload.single('avatar'), async (req, res) => {
     const buffer = await sharp(req.file.buffer).resize({ width: 250, height: 250 }).png().toBuffer()
 

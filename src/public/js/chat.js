@@ -32,6 +32,8 @@ $(function () {
 
     const reactMessage = function (messageId, reaction) {
         socket.emit('react message', { messageId, reaction });
+
+        // todo: process save react icon in db
     }
 
     const scrollToBottom = function () {
@@ -49,7 +51,74 @@ $(function () {
     const deleteMessage = function (lineMessageId) {
         let messageTextDeleted = `<div class='line-message' id=${lineMessageId}><p class='message deleted'>This message was deleted!</p></div>`
         $(`#${lineMessageId}`).replaceWith(messageTextDeleted)
+
+        // todo: process delete message in db
     }
+
+    const addTriggerMessageActions = function (id) {
+        let lineMessageId = generateElementId('message', id),
+            messageId = generateElementId('message__container', id),
+            actionBoxId = generateElementId('message__action', id),
+            buttonReactionId = generateElementId('message__reactionbutton', id),
+            reactionIconList = generateElementId('message__reactionlist', id),
+            moreId = generateElementId('message__morebutton', id),
+            moreDropdownListId = generateElementId('message__dropdownlist', id),
+            moreButtonElement = $(`#${moreDropdownListId}`),
+            lineMessageElement = $(`#${lineMessageId}`),
+            actionBoxElement = $(`#${actionBoxId}`),
+            messageContentElement = $(`#${messageId} .message__content`),
+            reactionIconListElement = $(`#${reactionIconList}`)
+
+        $(`#${moreId}`).on("click", function () {
+            if (moreButtonElement.css('display') == 'none') {
+                isShowMoreDropdownList = true
+                moreButtonElement.show()
+                actionBoxElement.css('display', 'flex')
+                lineMessageElement.css('background-color', '#F2F3F5')
+            } else {
+                isShowMoreDropdownList = false
+                moreButtonElement.hide()
+                actionBoxElement.hide()
+                lineMessageElement.css('background-color', '')
+            }
+        })
+
+        $(`#${moreDropdownListId} .delete`).on("click", function () {
+            deleteMessage(lineMessageId)
+            isShowMoreDropdownList = false
+        })
+
+        $(`#${moreDropdownListId} .edit`).on("click", function () {
+            moreButtonElement.hide()
+            lineMessageElement.css('background-color', '#FFF6D6')
+            $("#message").val(messageContentElement.text()).css('background-color', '#FFF6D6')
+            editMessageId = getMessageIdFromElementId('message__container-', messageId)
+        })
+
+        $(`#${lineMessageId}`).hover(function () {
+            if (!isShowMoreDropdownList && !isShowReactionList) {
+                $(this).css('background-color', '#F2F3F5')
+                $(this).find('.message__action').css('display', 'flex')
+            }
+        }, function () {
+            if (!isShowMoreDropdownList && !isShowReactionList) {
+                $(this).css('background-color', '')
+                $(this).find('.message__action').css('display', 'none')
+            }
+        })
+
+        $(`#${buttonReactionId}`).on("click", function () {
+            const newOpacity = isShowReactionList ? 0 : 1;
+
+            reactionIconListElement.css("opacity", newOpacity);
+            isShowReactionList = !isShowReactionList;
+        })
+
+        $(`#${reactionIconList} div.icon`).on("click", function () {
+            let messageId = getMessageIdFromElementId('message__reactionlist-', reactionIconList)
+            reactMessage(messageId, $(this).attr("data-title").toLowerCase())
+        })
+    } 
 
     socket.on("new message", function ({ messageData, from, to }) {
         const id = messageData.id,
@@ -58,13 +127,7 @@ $(function () {
             username = messageData.username,
             createdAt = messageData.createdAt
 
-        let lineMessageId = generateElementId('message', id),
-            messageId = generateElementId('message__container', id),
-            actionBoxId = generateElementId('message__action', id),
-            buttonReactionId = generateElementId('message__reactionbutton', id),
-            reactionIconList = generateElementId('message__reactionlist', id),
-            moreId = generateElementId('message__morebutton', id),
-            moreDropdownListId = generateElementId('message__dropdownlist', id),
+        let messageId = generateElementId('message__container', id),
             messageTemplateElm = $('#message-template'),
             messagesElm = $('#messages')
 
@@ -81,62 +144,8 @@ $(function () {
             messagesElm.append(html)
         }
 
-        let moreButtonElement = $(`#${moreDropdownListId}`),
-            lineMessageElement = $(`#${lineMessageId}`),
-            actionBoxElement = $(`#${actionBoxId}`),
-            messageContentElement = $(`#${messageId} .message__content`),
-            reactionIconListElement = $(`#${reactionIconList}`)
-
         if (!isEdit) {
-            $(`#${moreId}`).on("click", function () {
-                if (moreButtonElement.css('display') == 'none') {
-                    isShowMoreDropdownList = true
-                    moreButtonElement.show()
-                    actionBoxElement.css('display', 'flex')
-                    lineMessageElement.css('background-color', '#F2F3F5')
-                } else {
-                    isShowMoreDropdownList = false
-                    moreButtonElement.hide()
-                    actionBoxElement.hide()
-                    lineMessageElement.css('background-color', '')
-                }
-            })
-
-            $(`#${moreDropdownListId} .delete`).on("click", function () {
-                deleteMessage(lineMessageId)
-                isShowMoreDropdownList = false
-            })
-
-            $(`#${moreDropdownListId} .edit`).on("click", function () {
-                moreButtonElement.hide()
-                lineMessageElement.css('background-color', '#FFF6D6')
-                $("#message").val(messageContentElement.text()).css('background-color', '#FFF6D6')
-                editMessageId = getMessageIdFromElementId('message__container-', messageId)
-            })
-
-            $(`#${lineMessageId}`).hover(function () {
-                if (!isShowMoreDropdownList && !isShowReactionList) {
-                    $(this).css('background-color', '#F2F3F5')
-                    $(this).find('.message__action').css('display', 'flex')
-                }
-            }, function () {
-                if (!isShowMoreDropdownList && !isShowReactionList) {
-                    $(this).css('background-color', '')
-                    $(this).find('.message__action').css('display', 'none')
-                }
-            })
-
-            $(`#${buttonReactionId}`).on("click", function () {
-                const newOpacity = isShowReactionList ? 0 : 1;
-
-                reactionIconListElement.css("opacity", newOpacity);
-                isShowReactionList = !isShowReactionList;
-            })
-
-            $(`#${reactionIconList} div.icon`).on("click", function () {
-                let messageId = getMessageIdFromElementId('message__reactionlist-', reactionIconList)
-                reactMessage(messageId, $(this).attr("data-title").toLowerCase())
-            })
+            addTriggerMessageActions(id)
         }
 
         scrollToBottom()
@@ -183,7 +192,8 @@ $(function () {
         $('#user-list .user').on('click', function (e) {
             let messageTemplateElm = $('#message-template'),
                 messagesElm = $('#messages'),
-                messagesHtml = ''
+                messagesHtml = '',
+                listMessageIds = []
 
             e.preventDefault()
             selectedUserId = $(this).attr('id')
@@ -205,9 +215,16 @@ $(function () {
                                 message: message.content,
                                 createdAt: moment(message.sentAt).format('h:mm a')
                             })
+
+                            listMessageIds.push(message.messageId)
                         })
 
                         messagesElm.append(messagesHtml)
+
+                        listMessageIds.forEach((id) => {
+                            addTriggerMessageActions(id)
+                        })
+                        
                         scrollToBottom()
                     }
                 },
