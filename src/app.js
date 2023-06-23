@@ -124,6 +124,20 @@ io.on('connection', function (socket) {
         currentSubscription = subscription
         subscriptions[socket.userID] = subscription
     });
+    
+    socket.on("upload", (files, callback) => {
+        let errors = []
+
+        files.forEach((file) => {
+            console.log(file);
+
+            writeFile("/src/public/file", file, (err) => {
+                errors.push(err)
+            });
+        })
+
+        callback(errors)
+    });
 
     socket.on("disconnect", () => {
         connectedUsers.delete(socket.userID);

@@ -16,7 +16,6 @@ const messageSchema = new mongoose.Schema({
     },
     content: {
         type: String,
-        require: true,
         trim: true
     },
     senderUsername: {
