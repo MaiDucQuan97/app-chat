@@ -6,6 +6,7 @@ const socketio = require('socket.io')
 const http = require('http')
 const { generateMessage, generateMessageId } = require('./utils/messages')
 const Message = require('./models/message')
+const webPush = require('web-push');
 
 const app = express();
 const server = http.createServer(app)
@@ -13,6 +14,8 @@ const io = socketio(server)
 const routeUser = require('./routers/user')
 const routePage = require('./routers/page')
 const port = process.env.PORT
+const vapidKeys = webPush.generateVAPIDKeys();
+webPush.setVapidDetails('mailto:quan22061997@gmail.com', vapidKeys.publicKey, vapidKeys.privateKey);
 
 const messageReactions = {};
 const sessionMiddleware = session({
@@ -64,6 +67,7 @@ io.on('connection', function (socket) {
     });
 
     emitCurrentUserId(socket.userID)
+    emitWebPushPublicKey(socket.userID, vapidKeys.publicKey)
     emitUserList()
 
     socket.on('send message', async function (data) {
@@ -112,6 +116,10 @@ io.on('connection', function (socket) {
         }
     });
 
+    socket.on('subscribe', (subscription) => {
+        sendNotificationToClient(subscription)
+    });
+
     socket.on("disconnect", () => {
         connectedUsers.delete(socket.id);
         emitUserList();
@@ -126,6 +134,10 @@ function emitUserList() {
 
 function emitCurrentUserId(userID) {
     io.to(userID).emit('current_user_id', userID)
+}
+
+function emitWebPushPublicKey(userID, publicKey) {
+    io.to(userID).emit('web_push_public_key', publicKey)
 }
 
 async function storeMessage({ messageData, recipientUsername }) {
@@ -156,6 +168,15 @@ async function storeMessage({ messageData, recipientUsername }) {
     } catch (error) {
         console.log(error)
     }
+}
+
+function sendNotificationToClient(subscription) {
+    webPush.sendNotification(
+        subscription, 
+        JSON.stringify({title: 'Push notifications with Service Workers'})
+    ).catch((err) => {
+        console.error('Error sending push notification:', err);
+    });
 }
 
 server.listen(port, () => {

@@ -5,7 +5,8 @@ $(function () {
         userList = [],
         selectedUserId = '',
         selectedUsername = '',
-        currentUserId = ''
+        currentUserId = '',
+        webPushPublicKey = ''
 
     const socket = io();
 
@@ -237,6 +238,24 @@ $(function () {
 
     socket.on('current_user_id', (userID) => {
         currentUserId = userID;
+    });
+
+    socket.on('web_push_public_key', (publicKey) => {
+        webPushPublicKey = publicKey;
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+        navigator.serviceWorker
+            .register('js/service-worker.js')
+            .then((registration) => {
+                return registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: publicKey,
+                });
+            }).then((subscription) => {
+                socket.emit('subscribe', subscription);
+            }).catch((error) => {
+                console.error('Error subscribing for push notifications:', error);
+            });
+    }
     });
 
     $("#message-form").on('submit', function (e) {
