@@ -5,10 +5,12 @@ $(function () {
         userList = [],
         selectedUserId = '',
         selectedUsername = '',
-        currentUserId = '',
-        webPushPublicKey = ''
+        currentUserId = ''
 
     const socket = io();
+    if (Notification.permission !== 'granted') {
+        Notification.requestPermission();
+    }
 
     const sendMessage = function () {
         let messageValue = $('#message').val()
@@ -54,6 +56,21 @@ $(function () {
         $(`#${lineMessageId}`).replaceWith(messageTextDeleted)
 
         // todo: process delete message in db
+    }
+
+    const urlBase64ToUint8Array = function (base64String) {
+        var padding = '='.repeat((4 - base64String.length % 4) % 4);
+        var base64 = (base64String + padding)
+            .replace(/\-/g, '+')
+            .replace(/_/g, '/');
+    
+        var rawData = window.atob(base64);
+        var outputArray = new Uint8Array(rawData.length);
+    
+        for (var i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
     }
 
     const addTriggerMessageActions = function (id) {
@@ -241,21 +258,20 @@ $(function () {
     });
 
     socket.on('web_push_public_key', (publicKey) => {
-        webPushPublicKey = publicKey;
         if ('serviceWorker' in navigator && 'PushManager' in window) {
-        navigator.serviceWorker
-            .register('js/service-worker.js')
-            .then((registration) => {
-                return registration.pushManager.subscribe({
-                    userVisibleOnly: true,
-                    applicationServerKey: publicKey,
+            navigator.serviceWorker
+                .register('js/service-worker.js')
+                .then((registration) => {
+                    return registration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array(publicKey),
+                    });
+                }).then((subscription) => {
+                    socket.emit('subscribe', subscription);
+                }).catch((error) => {
+                    console.error('Error subscribing for push notifications:', error);
                 });
-            }).then((subscription) => {
-                socket.emit('subscribe', subscription);
-            }).catch((error) => {
-                console.error('Error subscribing for push notifications:', error);
-            });
-    }
+        }
     });
 
     $("#message-form").on('submit', function (e) {

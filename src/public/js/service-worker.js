@@ -2,8 +2,8 @@ self.addEventListener('push', (event) => {
     const payload = event.data ? event.data.json() : 'New message!';
   
     event.waitUntil(
-      self.registration.showNotification(payload.title, {
-        body: 'Yay it works!',
+      self.registration.showNotification(`Message from ${payload.username}`, {
+        body: payload.message,
       })
     );
 });

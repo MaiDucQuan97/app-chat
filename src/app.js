@@ -6,6 +6,7 @@ const socketio = require('socket.io')
 const http = require('http')
 const { generateMessage, generateMessageId } = require('./utils/messages')
 const Message = require('./models/message')
+const User = require('./models/user')
 const webPush = require('web-push');
 
 const app = express();
@@ -47,17 +48,23 @@ io.use((socket, next) => {
     let user = session.user,
         username = user.username,
         userID = user._id,
-        sessionID = session.sessionID
+        sessionID = session.sessionID,
+        subscription = user.subscription ? JSON.parse(user.subscription) : {}
 
-    socket.username = username;
-    socket.sessionID = sessionID;
+    socket.username = username
+    socket.sessionID = sessionID
     socket.userID = userID
+    socket.subscription = subscription
     next();
 });
 
-const connectedUsers = new Map();
+const connectedUsers = new Map()
+let subscriptions = []
 
 io.on('connection', function (socket) {
+    let currentSubscription = socket.subscription
+    subscriptions[socket.userID] = socket.subscription
+
     socket.join(socket.userID)
 
     connectedUsers.set(socket.userID, {
@@ -67,7 +74,10 @@ io.on('connection', function (socket) {
     });
 
     emitCurrentUserId(socket.userID)
-    emitWebPushPublicKey(socket.userID, vapidKeys.publicKey)
+    if (Object.keys(currentSubscription).length === 0 && currentSubscription.constructor === Object) {
+        emitWebPushPublicKey(socket.userID, vapidKeys.publicKey)
+    }
+     
     emitUserList()
 
     socket.on('send message', async function (data) {
@@ -96,6 +106,7 @@ io.on('connection', function (socket) {
             to: data.toId
         })
         await storeMessage({ messageData, recipientUsername: data.toUsername })
+        sendNotificationToClient(subscriptions[data.toId], messageData)
     });
 
     socket.on('react message', (data) => {
@@ -116,12 +127,16 @@ io.on('connection', function (socket) {
         }
     });
 
-    socket.on('subscribe', (subscription) => {
-        sendNotificationToClient(subscription)
+    socket.on('subscribe', async function (subscription) {
+        const user = await User.findById(socket.userID)
+        user.subscription = JSON.stringify(subscription)
+        await user.save()
+        currentSubscription = subscription
+        subscriptions[socket.userID] = subscription
     });
 
     socket.on("disconnect", () => {
-        connectedUsers.delete(socket.id);
+        connectedUsers.delete(socket.userID);
         emitUserList();
     });
 });
@@ -170,10 +185,10 @@ async function storeMessage({ messageData, recipientUsername }) {
     }
 }
 
-function sendNotificationToClient(subscription) {
+function sendNotificationToClient(subscription, messageData) {
     webPush.sendNotification(
         subscription, 
-        JSON.stringify({title: 'Push notifications with Service Workers'})
+        JSON.stringify({username: messageData.username, message: messageData.message})
     ).catch((err) => {
         console.error('Error sending push notification:', err);
     });
