@@ -1,5 +1,6 @@
 $(function () {
-    let isShowMoreDropdownList = false,
+    $( document ).ready(function() {
+        let isShowMoreDropdownList = false,
         isShowReactionList = false,
         editMessageId = '',
         userList = [],
@@ -8,6 +9,9 @@ $(function () {
         currentUserId = ''
 
     const socket = io();
+    if (Notification.permission !== 'granted') {
+        Notification.requestPermission();
+    }
 
     const sendMessage = function () {
         let messageValue = $('#message').val()
@@ -53,6 +57,21 @@ $(function () {
         $(`#${lineMessageId}`).replaceWith(messageTextDeleted)
 
         // todo: process delete message in db
+    }
+
+    const urlBase64ToUint8Array = function (base64String) {
+        var padding = '='.repeat((4 - base64String.length % 4) % 4);
+        var base64 = (base64String + padding)
+            .replace(/\-/g, '+')
+            .replace(/_/g, '/');
+    
+        var rawData = window.atob(base64);
+        var outputArray = new Uint8Array(rawData.length);
+    
+        for (var i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
     }
 
     const addTriggerMessageActions = function (id) {
@@ -239,6 +258,32 @@ $(function () {
         currentUserId = userID;
     });
 
+    socket.on('generate_new_subscription', async (publicKey) => {
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+            navigator.serviceWorker
+                .register('js/service-worker.js')
+                .then((registration) => {
+                    registration.pushManager
+                        .getSubscription()
+                        .then((existSubscription) => {
+                            if (existSubscription) {
+                                existSubscription.unsubscribe();
+                            }
+                        })
+
+                    return registration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array(publicKey),
+                    });
+                }).then((subscription) => {
+                    socket.emit('subscribe', subscription);
+                }).catch((error) => {
+                    console.error('Error subscribing for push notifications:', error);
+                    location.reload()
+                });
+        }
+    });
+
     $("#message-form").on('submit', function (e) {
         e.preventDefault()
         sendMessage()
@@ -260,5 +305,6 @@ $(function () {
                 alert('Logout failed. Please try again.');
             }
         });
+    })
     })
 })

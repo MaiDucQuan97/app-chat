@@ -6,6 +6,8 @@ const socketio = require('socket.io')
 const http = require('http')
 const { generateMessage, generateMessageId } = require('./utils/messages')
 const Message = require('./models/message')
+const User = require('./models/user')
+const webPush = require('web-push');
 
 const app = express();
 const server = http.createServer(app)
@@ -13,6 +15,8 @@ const io = socketio(server)
 const routeUser = require('./routers/user')
 const routePage = require('./routers/page')
 const port = process.env.PORT
+const vapidKeys = webPush.generateVAPIDKeys();
+webPush.setVapidDetails('mailto:quan22061997@gmail.com', vapidKeys.publicKey, vapidKeys.privateKey);
 
 const messageReactions = {};
 const sessionMiddleware = session({
@@ -46,13 +50,14 @@ io.use((socket, next) => {
         userID = user._id,
         sessionID = session.sessionID
 
-    socket.username = username;
-    socket.sessionID = sessionID;
+    socket.username = username
+    socket.sessionID = sessionID
     socket.userID = userID
     next();
 });
 
-const connectedUsers = new Map();
+const connectedUsers = new Map()
+let subscriptions = []
 
 io.on('connection', function (socket) {
     socket.join(socket.userID)
@@ -64,6 +69,8 @@ io.on('connection', function (socket) {
     });
 
     emitCurrentUserId(socket.userID)
+    emitGenerateNewSubscription(socket.userID, vapidKeys.publicKey)
+     
     emitUserList()
 
     socket.on('send message', async function (data) {
@@ -92,6 +99,7 @@ io.on('connection', function (socket) {
             to: data.toId
         })
         await storeMessage({ messageData, recipientUsername: data.toUsername })
+        sendNotificationToClient(subscriptions[data.toId], messageData)
     });
 
     socket.on('react message', (data) => {
@@ -112,8 +120,13 @@ io.on('connection', function (socket) {
         }
     });
 
+    socket.on('subscribe', (subscription) => {
+        currentSubscription = subscription
+        subscriptions[socket.userID] = subscription
+    });
+
     socket.on("disconnect", () => {
-        connectedUsers.delete(socket.id);
+        connectedUsers.delete(socket.userID);
         emitUserList();
     });
 });
@@ -126,6 +139,10 @@ function emitUserList() {
 
 function emitCurrentUserId(userID) {
     io.to(userID).emit('current_user_id', userID)
+}
+
+function emitGenerateNewSubscription(userID, publicKey) {
+    io.to(userID).emit('generate_new_subscription', publicKey)
 }
 
 async function storeMessage({ messageData, recipientUsername }) {
@@ -155,6 +172,17 @@ async function storeMessage({ messageData, recipientUsername }) {
         }
     } catch (error) {
         console.log(error)
+    }
+}
+
+function sendNotificationToClient(subscription, messageData) {
+    if (subscription && Object.keys(subscription).length !== 0 && subscription.constructor === Object) {
+        webPush.sendNotification(
+            subscription, 
+            JSON.stringify({username: messageData.username, message: messageData.message})
+        ).catch((err) => {
+            console.error('Error sending push notification:', err);
+        });
     }
 }
 
