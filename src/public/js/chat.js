@@ -1,5 +1,6 @@
 $(function () {
-    let isShowMoreDropdownList = false,
+    $( document ).ready(function() {
+        let isShowMoreDropdownList = false,
         isShowReactionList = false,
         editMessageId = '',
         userList = [],
@@ -257,11 +258,19 @@ $(function () {
         currentUserId = userID;
     });
 
-    socket.on('web_push_public_key', (publicKey) => {
+    socket.on('generate_new_subscription', async (publicKey) => {
         if ('serviceWorker' in navigator && 'PushManager' in window) {
             navigator.serviceWorker
                 .register('js/service-worker.js')
                 .then((registration) => {
+                    registration.pushManager
+                        .getSubscription()
+                        .then((existSubscription) => {
+                            if (existSubscription) {
+                                existSubscription.unsubscribe();
+                            }
+                        })
+
                     return registration.pushManager.subscribe({
                         userVisibleOnly: true,
                         applicationServerKey: urlBase64ToUint8Array(publicKey),
@@ -270,6 +279,7 @@ $(function () {
                     socket.emit('subscribe', subscription);
                 }).catch((error) => {
                     console.error('Error subscribing for push notifications:', error);
+                    location.reload()
                 });
         }
     });
@@ -295,5 +305,6 @@ $(function () {
                 alert('Logout failed. Please try again.');
             }
         });
+    })
     })
 })

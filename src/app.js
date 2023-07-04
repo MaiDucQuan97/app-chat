@@ -48,13 +48,11 @@ io.use((socket, next) => {
     let user = session.user,
         username = user.username,
         userID = user._id,
-        sessionID = session.sessionID,
-        subscription = user.subscription ? JSON.parse(user.subscription) : {}
+        sessionID = session.sessionID
 
     socket.username = username
     socket.sessionID = sessionID
     socket.userID = userID
-    socket.subscription = subscription
     next();
 });
 
@@ -62,9 +60,6 @@ const connectedUsers = new Map()
 let subscriptions = []
 
 io.on('connection', function (socket) {
-    let currentSubscription = socket.subscription
-    subscriptions[socket.userID] = socket.subscription
-
     socket.join(socket.userID)
 
     connectedUsers.set(socket.userID, {
@@ -74,9 +69,7 @@ io.on('connection', function (socket) {
     });
 
     emitCurrentUserId(socket.userID)
-    if (Object.keys(currentSubscription).length === 0 && currentSubscription.constructor === Object) {
-        emitWebPushPublicKey(socket.userID, vapidKeys.publicKey)
-    }
+    emitGenerateNewSubscription(socket.userID, vapidKeys.publicKey)
      
     emitUserList()
 
@@ -127,10 +120,7 @@ io.on('connection', function (socket) {
         }
     });
 
-    socket.on('subscribe', async function (subscription) {
-        const user = await User.findById(socket.userID)
-        user.subscription = JSON.stringify(subscription)
-        await user.save()
+    socket.on('subscribe', (subscription) => {
         currentSubscription = subscription
         subscriptions[socket.userID] = subscription
     });
@@ -151,8 +141,8 @@ function emitCurrentUserId(userID) {
     io.to(userID).emit('current_user_id', userID)
 }
 
-function emitWebPushPublicKey(userID, publicKey) {
-    io.to(userID).emit('web_push_public_key', publicKey)
+function emitGenerateNewSubscription(userID, publicKey) {
+    io.to(userID).emit('generate_new_subscription', publicKey)
 }
 
 async function storeMessage({ messageData, recipientUsername }) {
@@ -186,12 +176,14 @@ async function storeMessage({ messageData, recipientUsername }) {
 }
 
 function sendNotificationToClient(subscription, messageData) {
-    webPush.sendNotification(
-        subscription, 
-        JSON.stringify({username: messageData.username, message: messageData.message})
-    ).catch((err) => {
-        console.error('Error sending push notification:', err);
-    });
+    if (subscription && Object.keys(subscription).length !== 0 && subscription.constructor === Object) {
+        webPush.sendNotification(
+            subscription, 
+            JSON.stringify({username: messageData.username, message: messageData.message})
+        ).catch((err) => {
+            console.error('Error sending push notification:', err);
+        });
+    }
 }
 
 server.listen(port, () => {

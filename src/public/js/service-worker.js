@@ -3,7 +3,7 @@ self.addEventListener('push', (event) => {
   
     event.waitUntil(
       self.registration.showNotification(`Message from ${payload.username}`, {
-        body: payload.message,
+        body: payload.message
       })
     );
 });
