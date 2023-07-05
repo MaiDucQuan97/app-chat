@@ -3,9 +3,9 @@ const express = require("express")
 const path = require('path')
 const socketio = require('socket.io')
 const http = require('http')
-const { writeFile } = require('fs')
+const fs  = require('fs')
 const { generateMessage, generateMessageId , storeMessage } = require('./utils/messages')
-const { generateUniqueFileName } = require('./utils/uploadFiles')
+const { generateUniqueFileName, storeUploadFileMessage, getFileType } = require('./utils/uploadFiles')
 const { sendNotificationToClient, vapidKeys } = require('./utils/subscribe')
 const { sessionMiddleware } = require('./utils/session')
 
@@ -114,17 +114,33 @@ io.on('connection', function (socket) {
         subscriptions[socket.userID] = subscription
     });
     
-    socket.on("upload", (file, originalFileName, callback) => {
-        let fileName = generateUniqueFileName(originalFileName),
-            filePath = path.join(__dirname, 'public/uploadFolder', fileName);
+    socket.on("upload", async ({files, originalFileNames, toUsername}) => {
+        let uploadedFiles = [];
 
-            writeFile(filePath, file, (error) => {
-                if (error) {
-                    socket.emit('uploadResponse', 'Error saving file.');
-                } else {
-                    socket.emit('uploadResponse', 'File uploaded successfully.');
+        Object.keys(files).forEach((key) => {
+            let file = files[key],
+                originalFileName = originalFileNames[key],
+                fileName = generateUniqueFileName(originalFileName),
+                uploadFolderPath = path.join(__dirname, 'public/uploadFolder'),
+                filePath = path.join(__dirname, 'public/uploadFolder', fileName),
+                urlFilePath = path.join('uploadFolder', fileName),
+                fileType = getFileType(filePath)
+
+            if (!fs.existsSync(uploadFolderPath)) {
+                fs.mkdirSync(uploadFolderPath);
+            }
+
+            fs.writeFile(filePath, file, (err) => {
+                if (err) {
+                    console.log(err)
                 }
             })
+
+            uploadedFiles.push({fileType, urlFilePath, originalFileName})
+        })
+
+        let messageData = await storeUploadFileMessage(JSON.stringify(uploadedFiles), socket.username, toUsername)
+        socket.emit('uploadResponse', messageData );
     });
 
     socket.on("disconnect", () => {

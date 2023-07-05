@@ -140,13 +140,23 @@ $(function () {
         }
 
         const uploadFile = function (files) {
+            let originalFileNames = []
+
+            if (!selectedUserId && userList.length !== 0) {
+                selectedUserId = userList[0].id
+                selectedUsername = userList[0].username
+            }
             
             Object.keys(files).forEach((key) => {
                 let file = files[key]
-                socket.emit("upload", file, file.name, (status) => {
-                    console.log(status);
-                });
+                originalFileNames[key] = file.name
             })
+
+            socket.emit("upload", {
+                files, 
+                originalFileNames,
+                toUsername: selectedUsername
+            });
         }
 
         socket.on("new message", function ({ messageData, from, to }) {
@@ -167,7 +177,9 @@ $(function () {
                     id: id,
                     username,
                     message,
-                    createdAt: moment(createdAt).format('h:mm a')
+                    createdAt: moment(createdAt).format('h:mm a'),
+                    type_text: true,
+                    type_image: false
                 })
 
                 messagesElm.append(html)
@@ -238,12 +250,36 @@ $(function () {
                     success: function (response) {
                         if (response.length !== 0) {
                             response.forEach((message) => {
-                                messagesHtml += Mustache.render(messageTemplateElm.html(), {
-                                    id: message.messageId,
-                                    username: message.senderUsername,
-                                    message: message.content,
-                                    createdAt: moment(message.sentAt).format('h:mm a')
-                                })
+                                if (message.type == 'file') {
+                                    let uploadedFiles = message.content ? JSON.parse(message.content) : [],
+                                        imageFiles = [],
+                                        otherFiles = [];
+
+                                    uploadedFiles.forEach((file) => {
+                                        if (file.fileType === 'image') {
+                                            imageFiles.push(file);
+                                        } else {
+                                            otherFiles.push(file);
+                                        }
+                                    });
+                                    
+                                    messagesHtml += Mustache.render(messageTemplateElm.html(), {
+                                        id: message.messageId,
+                                        username: message.senderUsername,
+                                        message: '',
+                                        createdAt: moment(message.sentAt).format('h:mm a'),
+                                        imageFiles: imageFiles,
+                                        otherFiles: otherFiles
+                                    })
+                                } else {
+                                    messagesHtml += Mustache.render(messageTemplateElm.html(), {
+                                        id: message.messageId,
+                                        username: message.senderUsername,
+                                        message: message.content,
+                                        createdAt: moment(message.sentAt).format('h:mm a'),
+                                        type_text: true
+                                    })
+                                }
 
                                 listMessageIds.push(message.messageId)
                             })
@@ -292,6 +328,26 @@ $(function () {
                         location.reload()
                     });
             }
+        });
+
+        socket.on('uploadResponse', (messageData) => {
+            let messageTemplateElm = $('#message-template'),
+                messagesElm = $('#messages'),
+                uploadFileElement = '',
+                uploadedFiles = messageData.content ? JSON.parse(messageData.content) : []
+
+            uploadFileElement = Mustache.render(messageTemplateElm.html(), {
+                id: messageData.messageId,
+                username: messageData.senderUsername,
+                message: '',
+                createdAt: moment(messageData.sentAt).format('h:mm a'),
+                type_image: true,
+                uploadedFiles: uploadedFiles.filter((file) => file.fileType == 'image')
+            })
+
+            messagesElm.append(uploadFileElement)
+
+            scrollToBottom()
         });
 
         $("#message").on("keypress", function(event) {

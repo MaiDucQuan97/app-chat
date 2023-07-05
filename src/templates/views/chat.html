@@ -55,8 +55,26 @@
                     <span class="message__username">{{username}}</span>
                     <span class="message__meta">{{createdAt}}</span>
                 </div>
-                <div class="message__content">{{message}}</div>
+                <div class="message__content">
+                    {{#type_text}}
+                        {{message}}
+                    {{/type_text}}
+                    {{#imageFiles}}
+                        <img class="message__imgfile" src="{{urlFilePath}}" alt="{{originalFileName}}"/>
+                    {{/imageFiles}}
+                    {{#otherFiles}}
+                        <div class="message__otherfile">
+                            <div class="preview__icon">
+                                <i class="file icon"></i>
+                            </div>
+                            <div class="preview__content">
+                                <a href="{{urlFilePath}}" target="_blank" download>{{originalFileName}}</a>
+                            </div>
+                        </div>
+                    {{/otherFiles}}
+                </div>
             </div>
+            {{#type_text}}
             <div class="message__action" id="message__action-{{id}}">
                 <button class="message__reactionbutton" title="Add reaction" id="message__reactionbutton-{{id}}">
                     <i class="smile outline icon"></i>
@@ -95,6 +113,7 @@
                 </div>
             </div>
             <div class="message__reactions" id="message__reactions-{{id}}"></div>
+            {{/type_text}}
         </div>
     </script>
 

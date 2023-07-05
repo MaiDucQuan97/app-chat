@@ -35,11 +35,6 @@
     z-index: 10;
 }
 
-/* .message:hover .message__action {
-    display: flex;
-    background-color: #f2f3f5;
-} */
-
 .message__dropdownlist {
     display: none;
     z-index: 9999;
@@ -84,8 +79,6 @@
 .menu a:hover {
     background-color: #ccc;
 }
-
-/* General Styles */
 
 * {
     margin: 0;
@@ -143,8 +136,6 @@ button:disabled {
     background: #7c5cbf94;
 }
 
-/* Join Page Styles */
-
 .centered-form {
     background: #333744;
     width: 100vw;
@@ -170,8 +161,6 @@ button:disabled {
     width: 100%;
 }
 
-/* Chat Page Layout */
-
 .chat {
     display: flex;
     flex-wrap: wrap;
@@ -190,8 +179,6 @@ button:disabled {
     overflow-y: scroll
 }
 
-/* Chat styles */
-
 .chat__main {
     flex-grow: 1;
     display: flex;
@@ -205,8 +192,6 @@ button:disabled {
     padding: 24px 24px 0 24px;
     overflow-y: scroll;
 }
-
-/* Message Styles */
 
 .message {
     margin-bottom: 16px;
@@ -226,8 +211,6 @@ button:disabled {
 .message a {
     color: #0070CC;
 }
-
-/* Message Composition Styles */
 
 .compose {
     display: flex;
@@ -254,8 +237,6 @@ button:disabled {
     font-size: 14px;
 }
 
-/* Chat Sidebar Styles */
-
 .room-title {
     font-weight: 400;
     font-size: 22px;
@@ -270,7 +251,6 @@ button:disabled {
     padding: 12px 24px 0 24px;
 }
 
-/* user list */
 .users {
     list-style-type: none;
     font-weight: 300;
@@ -290,4 +270,66 @@ button:disabled {
 .user:hover {
   background-color: lightgray;
   border-radius: 5px;
+}
+
+.message__imgfile {
+    width: 300px;
+}
+
+.message__otherfile {
+    width: 300px;
+    background-color: #f7f8fa;
+    border: 1px solid #ebecef;
+    border-radius: 0.25rem;
+    color: #6c727a;
+    display: -webkit-box;
+}
+
+.preview__icon {
+    -webkit-margin-start: 1rem;
+    align-items: center;
+    align-self: center;
+    background-color: #e4e7ea;
+    border-radius: 0.25rem;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    height: 3.25rem;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+    margin-top: 0.75rem;
+    margin-block: 0.75rem;
+    margin-inline-start: 1rem;
+    width: 3rem;
+}
+
+.preview__icon i {
+    font-size: 1.5em !important;
+    text-rendering: auto;
+    display: inline-block !important;
+    font-style: normal !important;
+    font-variant: normal;
+    font-weight: 400 !important;
+    letter-spacing: 0;
+    line-height: 1;
+    -webkit-user-select: none !important;
+    -moz-user-select: none;
+    user-select: none;
+    vertical-align: middle;
+}
+
+.preview__content {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+    margin-top: 0.5rem;
+    margin-block: 0.5rem;
+    overflow: hidden;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-inline: 1rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
