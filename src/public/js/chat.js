@@ -140,9 +140,13 @@ $(function () {
         }
 
         const uploadFile = function (files) {
-            socket.emit("upload", files, (status) => {
-                console.log(status);
-            });
+            
+            Object.keys(files).forEach((key) => {
+                let file = files[key]
+                socket.emit("upload", file, file.name, (status) => {
+                    console.log(status);
+                });
+            })
         }
 
         socket.on("new message", function ({ messageData, from, to }) {
@@ -289,6 +293,12 @@ $(function () {
                     });
             }
         });
+
+        $("#message").on("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+            }
+        })
 
         $("#sendMessage").on("click", function (e) {
             e.preventDefault()

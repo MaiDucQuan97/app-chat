@@ -1,13 +1,13 @@
 require('./db/mongoose')
-const express = require("express");
-const session = require('express-session');
-const path = require('path');
+const express = require("express")
+const path = require('path')
 const socketio = require('socket.io')
 const http = require('http')
-const { generateMessage, generateMessageId } = require('./utils/messages')
-const Message = require('./models/message')
-const User = require('./models/user')
-const webPush = require('web-push');
+const { writeFile } = require('fs')
+const { generateMessage, generateMessageId , storeMessage } = require('./utils/messages')
+const { generateUniqueFileName } = require('./utils/uploadFiles')
+const { sendNotificationToClient, vapidKeys } = require('./utils/subscribe')
+const { sessionMiddleware } = require('./utils/session')
 
 const app = express();
 const server = http.createServer(app)
@@ -15,19 +15,8 @@ const io = socketio(server)
 const routeUser = require('./routers/user')
 const routePage = require('./routers/page')
 const port = process.env.PORT
-const vapidKeys = webPush.generateVAPIDKeys();
-webPush.setVapidDetails('mailto:quan22061997@gmail.com', vapidKeys.publicKey, vapidKeys.privateKey);
 
 const messageReactions = {};
-const sessionMiddleware = session({
-    secret: 'app_chat_secret_key',
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-        secure: false,
-        maxAge: 3600000 // 1 hour
-    },
-})
 app.use(sessionMiddleware);
 io.use((socket, next) => {
     sessionMiddleware(socket.request, {}, next);
@@ -125,18 +114,17 @@ io.on('connection', function (socket) {
         subscriptions[socket.userID] = subscription
     });
     
-    socket.on("upload", (files, callback) => {
-        let errors = []
+    socket.on("upload", (file, originalFileName, callback) => {
+        let fileName = generateUniqueFileName(originalFileName),
+            filePath = path.join(__dirname, 'public/uploadFolder', fileName);
 
-        files.forEach((file) => {
-            console.log(file);
-
-            writeFile("/src/public/file", file, (err) => {
-                errors.push(err)
-            });
-        })
-
-        callback(errors)
+            writeFile(filePath, file, (error) => {
+                if (error) {
+                    socket.emit('uploadResponse', 'Error saving file.');
+                } else {
+                    socket.emit('uploadResponse', 'File uploaded successfully.');
+                }
+            })
     });
 
     socket.on("disconnect", () => {
@@ -157,47 +145,6 @@ function emitCurrentUserId(userID) {
 
 function emitGenerateNewSubscription(userID, publicKey) {
     io.to(userID).emit('generate_new_subscription', publicKey)
-}
-
-async function storeMessage({ messageData, recipientUsername }) {
-    try {
-        let currentMessageData = {
-            messageId: messageData.id,
-            content: messageData.message,
-            senderUsername: messageData.username,
-            recipientUsername,
-            previousId: '',
-            nextId: ''
-        }
-
-        let previousMessage = await Message.getNewestMessageOfCurrentUser(messageData.username, recipientUsername)
-
-        if (previousMessage) {
-            currentMessageData.previousId = previousMessage._id.toString()
-        }
-
-        const message = await Message(currentMessageData)
-
-        await message.save()
-
-        if (previousMessage) {
-            previousMessage.nextId = message._id.toString()
-            await previousMessage.save()
-        }
-    } catch (error) {
-        console.log(error)
-    }
-}
-
-function sendNotificationToClient(subscription, messageData) {
-    if (subscription && Object.keys(subscription).length !== 0 && subscription.constructor === Object) {
-        webPush.sendNotification(
-            subscription, 
-            JSON.stringify({username: messageData.username, message: messageData.message})
-        ).catch((err) => {
-            console.error('Error sending push notification:', err);
-        });
-    }
 }
 
 server.listen(port, () => {

@@ -18,13 +18,6 @@
     margin-left: 10px;
 }
 
-#username,
-#content,
-#message
-{
-    margin-bottom: 5px;
-}
-
 .message.deleted {
     font-style: italic;
 }
