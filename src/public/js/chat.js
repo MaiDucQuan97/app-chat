@@ -41,7 +41,20 @@ $(function () {
         }
 
         const scrollToBottom = function () {
-            $('#messages')[0].scrollTop = $('#messages')[0].scrollHeight
+            let messageElm = $('#messages'),
+                images = messageElm.find("img"),
+                loadedImg = 0
+            
+            images.on("load", function() {
+                loadedImg++
+                if (loadedImg == images.length) {
+                    $('#messages')[0].scrollTop = $('#messages')[0].scrollHeight
+                }
+            })
+
+            if (images.length === 0) {
+                $messages[0].scrollTop = $messages[0].scrollHeight;
+            }
         }
 
         const generateElementId = function (name, id) {
@@ -334,15 +347,25 @@ $(function () {
             let messageTemplateElm = $('#message-template'),
                 messagesElm = $('#messages'),
                 uploadFileElement = '',
-                uploadedFiles = messageData.content ? JSON.parse(messageData.content) : []
+                uploadedFiles = messageData.content ? JSON.parse(messageData.content) : [],
+                imageFiles = [],
+                otherFiles = [];
 
-            uploadFileElement = Mustache.render(messageTemplateElm.html(), {
-                id: messageData.messageId,
-                username: messageData.senderUsername,
+            uploadedFiles.forEach((file) => {
+                if (file.fileType === 'image') {
+                    imageFiles.push(file);
+                } else {
+                    otherFiles.push(file);
+                }
+            });
+                
+            uploadFileElement += Mustache.render(messageTemplateElm.html(), {
+                id: message.messageId,
+                username: message.senderUsername,
                 message: '',
-                createdAt: moment(messageData.sentAt).format('h:mm a'),
-                type_image: true,
-                uploadedFiles: uploadedFiles.filter((file) => file.fileType == 'image')
+                createdAt: moment(message.sentAt).format('h:mm a'),
+                imageFiles: imageFiles,
+                otherFiles: otherFiles
             })
 
             messagesElm.append(uploadFileElement)
