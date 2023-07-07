@@ -1,13 +1,13 @@
 require('./db/mongoose')
-const express = require("express");
-const session = require('express-session');
-const path = require('path');
+const express = require("express")
+const path = require('path')
 const socketio = require('socket.io')
 const http = require('http')
-const { generateMessage, generateMessageId } = require('./utils/messages')
-const Message = require('./models/message')
-const User = require('./models/user')
-const webPush = require('web-push');
+const fs  = require('fs')
+const { generateMessage, generateMessageId , storeMessage } = require('./utils/messages')
+const { generateUniqueFileName, storeUploadFileMessage, getFileType } = require('./utils/uploadFiles')
+const { sendNotificationToClient, vapidKeys } = require('./utils/subscribe')
+const { sessionMiddleware } = require('./utils/session')
 
 const app = express();
 const server = http.createServer(app)
@@ -15,19 +15,8 @@ const io = socketio(server)
 const routeUser = require('./routers/user')
 const routePage = require('./routers/page')
 const port = process.env.PORT
-const vapidKeys = webPush.generateVAPIDKeys();
-webPush.setVapidDetails('mailto:quan22061997@gmail.com', vapidKeys.publicKey, vapidKeys.privateKey);
 
 const messageReactions = {};
-const sessionMiddleware = session({
-    secret: 'app_chat_secret_key',
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-        secure: false,
-        maxAge: 3600000 // 1 hour
-    },
-})
 app.use(sessionMiddleware);
 io.use((socket, next) => {
     sessionMiddleware(socket.request, {}, next);
@@ -124,6 +113,35 @@ io.on('connection', function (socket) {
         currentSubscription = subscription
         subscriptions[socket.userID] = subscription
     });
+    
+    socket.on("upload", async ({files, originalFileNames, toUsername}) => {
+        let uploadedFiles = [];
+
+        Object.keys(files).forEach((key) => {
+            let file = files[key],
+                originalFileName = originalFileNames[key],
+                fileName = generateUniqueFileName(originalFileName),
+                uploadFolderPath = path.join(__dirname, 'public/uploadFolder'),
+                filePath = path.join(__dirname, 'public/uploadFolder', fileName),
+                urlFilePath = path.join('uploadFolder', fileName),
+                fileType = getFileType(filePath)
+
+            if (!fs.existsSync(uploadFolderPath)) {
+                fs.mkdirSync(uploadFolderPath);
+            }
+
+            fs.writeFile(filePath, file, (err) => {
+                if (err) {
+                    console.log(err)
+                }
+            })
+
+            uploadedFiles.push({fileType, urlFilePath, originalFileName})
+        })
+
+        let messageData = await storeUploadFileMessage(JSON.stringify(uploadedFiles), socket.username, toUsername)
+        socket.emit('uploadResponse', messageData );
+    });
 
     socket.on("disconnect", () => {
         connectedUsers.delete(socket.userID);
@@ -143,47 +161,6 @@ function emitCurrentUserId(userID) {
 
 function emitGenerateNewSubscription(userID, publicKey) {
     io.to(userID).emit('generate_new_subscription', publicKey)
-}
-
-async function storeMessage({ messageData, recipientUsername }) {
-    try {
-        let currentMessageData = {
-            messageId: messageData.id,
-            content: messageData.message,
-            senderUsername: messageData.username,
-            recipientUsername,
-            previousId: '',
-            nextId: ''
-        }
-
-        let previousMessage = await Message.getNewestMessageOfCurrentUser(messageData.username, recipientUsername)
-
-        if (previousMessage) {
-            currentMessageData.previousId = previousMessage._id.toString()
-        }
-
-        const message = await Message(currentMessageData)
-
-        await message.save()
-
-        if (previousMessage) {
-            previousMessage.nextId = message._id.toString()
-            await previousMessage.save()
-        }
-    } catch (error) {
-        console.log(error)
-    }
-}
-
-function sendNotificationToClient(subscription, messageData) {
-    if (subscription && Object.keys(subscription).length !== 0 && subscription.constructor === Object) {
-        webPush.sendNotification(
-            subscription, 
-            JSON.stringify({username: messageData.username, message: messageData.message})
-        ).catch((err) => {
-            console.error('Error sending push notification:', err);
-        });
-    }
 }
 
 server.listen(port, () => {

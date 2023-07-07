@@ -3,20 +3,17 @@ const mongoose = require('mongoose')
 const messageSchema = new mongoose.Schema({
     messageId: {
         type: String,
-        require: true,
+        required: true,
         unique: true
     },
     previousId: {
         type: String,
-        require: true
     },
     nextId: {
         type: String,
-        require: true
     },
     content: {
         type: String,
-        require: true,
         trim: true
     },
     senderUsername: {
@@ -28,6 +25,10 @@ const messageSchema = new mongoose.Schema({
         type: String,
         required: true,
         trim: true
+    },
+    type: {
+        type: String,
+        default: 'text'
     },
     sentAt: {
         type: Date,
