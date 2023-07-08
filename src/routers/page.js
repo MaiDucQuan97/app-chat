@@ -16,4 +16,8 @@ router.get("/signup", isLoggedIn, (req, res) => {
     res.sendFile(path.join(__dirname + '/../templates/views/signup.html'));
 })
 
+router.get("/video", auth, (req, res) => {
+    res.sendFile(path.join(__dirname + '/../templates/views/video.html'));
+})
+
 module.exports = router
