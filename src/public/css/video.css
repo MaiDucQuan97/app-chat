@@ -24,13 +24,6 @@
     visibility: visible;
 }
 
-.local-video{
-    bottom: 0;
-    left: 0;
-    position: fixed;
-    width:15vw;
-}
-
 .mirror-mode{
     -ms-transform: scaleX(-1);
     -moz-transform: scaleX(-1);
@@ -42,17 +35,6 @@
     font-size: smaller;
     margin-top: 5px;
     align-self: flex-end;
-}
-
-.msg{
-    font-weight: 400;
-    font-size: 12px;
-    color: black;
-    background-color: wheat;
-}
-
-.chat-card{
-    border-radius: 6px;
 }
 
 .btn-no-effect:focus{
@@ -108,39 +90,6 @@
 @keyframes animatetop {
     from {top: -300px; opacity: 0}
     to {top: 0; opacity: 1}
-}
-
-@media only screen and (max-width:767px){
-    .chat-col{
-        right: -100vw;
-        width: 100vw;
-        z-index: 99999;
-        transition: 0.3s;
-        top: 47px;
-    }
-  
-    .chat-opened::-webkit-scrollbar {
-        display: none;
-    }
-
-    #chat-messages{
-        height: 60vh;
-    }
-
-    .chat-box{
-        bottom: 90px;
-        margin-bottom: 0px;
-    }
-    
-    .card-sm{
-        max-width: 100%;
-        min-width: 50%;
-    }
-
-
-    .local-video{
-        width:40vw;
-    }
 }
 
 @media (min-width:768px){
