@@ -170,10 +170,10 @@ export default {
     },
 
     setLocalStream( stream, mirrorMode = true ) {
-        const localVidElem = document.getElementById( 'local' );
+        const localVidElem = $( '#local' );
 
         localVidElem.srcObject = stream;
-        // mirrorMode ? localVidElem.classList.add( 'mirror-mode' ) : localVidElem.classList.remove( 'mirror-mode' );
+        mirrorMode ? localVidElem.classList.add( 'mirror-mode' ) : localVidElem.classList.remove( 'mirror-mode' );
     },
 
     adjustVideoElemSize() {

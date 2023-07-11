@@ -104,6 +104,22 @@ const stream = (socket, io) => {
         socket.emit('uploadResponse', messageData );
     });
 
+    // socket.on( 'subscribe_video_call', ( data ) => {
+    //     io.to(data.toId).emit( 'new user', { socketId: data.socketId } );
+    // } );
+
+    // socket.on( 'newUserStart', ( data ) => {
+    //     socket.to( data.to ).emit( 'newUserStart', { sender: data.sender } );
+    // } );
+
+    socket.on( 'sdp', ( data ) => {
+        io.to( data.to ).emit( 'sdp', { description: data.description, sender: data.sender } );
+    } );
+
+    socket.on( 'ice candidates', ( data ) => {
+        io.to( data.to ).emit( 'ice candidates', { candidate: data.candidate, sender: data.sender } );
+    } );
+
     socket.on("disconnect", () => {
         connectedUsers.delete(socket.userID);
         emitUserList(io);

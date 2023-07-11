@@ -52,7 +52,7 @@ $(function () {
         })
 
         if (images.length === 0) {
-            $messages[0].scrollTop = $messages[0].scrollHeight;
+            $('#messages')[0].scrollTop = $('#messages')[0].scrollHeight
         }
     }
 
@@ -376,6 +376,11 @@ $(function () {
         if (event.key === "Enter") {
             event.preventDefault();
         }
+    })
+
+    $(document).on("click", "#video-call", () => {
+        let redirectUrl = `/video?toUserId=${selectedUserId}&fromUserId=${currentUserId}`
+        window.location.replace(redirectUrl)
     })
 
     $("#sendMessage").on("click", function (e) {
