@@ -11,6 +11,7 @@ const io = socketio(server)
 const routeUser = require('./routers/user')
 const routePage = require('./routers/page')
 const port = process.env.PORT
+const hostname = process.env.HOSTNAME
 
 app.use(sessionMiddleware);
 io.use((socket, next) => {
@@ -45,5 +46,5 @@ io.on( 'connection', (socket) => {
 });
 
 server.listen(port, () => {
-    console.log(`Server is up on port ${port}`)
+    console.log(`Server is up on port https://${hostname}:${port}`)
 });

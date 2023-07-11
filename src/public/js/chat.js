@@ -52,7 +52,7 @@ $(function () {
         })
 
         if (images.length === 0) {
-            $messages[0].scrollTop = $messages[0].scrollHeight;
+            $('#messages')[0].scrollTop = $('#messages')[0].scrollHeight
         }
     }
 
@@ -337,7 +337,9 @@ $(function () {
                     socket.emit('subscribe', subscription);
                 }).catch((error) => {
                     console.error('Error subscribing for push notifications:', error);
-                    location.reload()
+                    if (!error.includes("permission denied")) {
+                        location.reload()
+                    }
                 });
         }
     });
@@ -376,6 +378,11 @@ $(function () {
         if (event.key === "Enter") {
             event.preventDefault();
         }
+    })
+
+    $(document).on("click", "#video-call", () => {
+        let redirectUrl = `/video?toUserId=${selectedUserId}&fromUserId=${currentUserId}`
+        window.location.replace(redirectUrl)
     })
 
     $("#sendMessage").on("click", function (e) {

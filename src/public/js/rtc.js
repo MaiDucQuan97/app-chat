@@ -7,81 +7,88 @@ $(window).on( 'load', () => {
 
     let socket = io();
 
-    var socketId = '';
-    var myStream = '';
-    var screen = '';
-    var recordedStream = [];
-    var mediaRecorder = '';
+    var allUrlParams = getAllUrlParams(),
+        toUserId = allUrlParams['toUserId'] ?? '',
+        currentUserId = allUrlParams['fromUserId'] ?? '',
+        myStream = '',
+        screen = '',
+        recordedStream = [],
+        mediaRecorder = '';
 
     //Get user video by default
     getAndSetUserStream();
 
-    // socket.on( 'connect', () => {
-    //     //set socketId
-    //     socketId = socket.io.engine.id;
-    //     document.getElementById('randomNumber').innerText = randomNumber;
+    socket.on( 'connect', () => {
+        // socket.on('current_user_id', (userID) => {
+        //     currentUserId = userID;
+        // });
 
+        // socket.emit( 'subscribe_video_call', {
+        //     toId: toUserId,
+        //     socketId: currentUserId
+        // } );
 
-    //     socket.emit( 'subscribe', {
-    //         room: room,
-    //         socketId: socketId
-    //     } );
+        // socket.on( 'new user', ( data ) => {
+        //     socket.emit( 'newUserStart', { to: toUserId, sender: currentUserId } );
+        //     pc.push( data.socketId );
+        //     init( true, data.socketId );
+        // } );
 
+        // socket.on( 'newUserStart', ( data ) => {
+        //     pc.push( data.sender );
+        //     init( false, data.sender );
+        // } );
 
-    //     socket.on( 'new user', ( data ) => {
-    //         socket.emit( 'newUserStart', { to: data.socketId, sender: socketId } );
-    //         pc.push( data.socketId );
-    //         init( true, data.socketId );
-    //     } );
+        pc.push( toUserId );
+        init( true, toUserId );
+        pc.push( currentUserId );
+        init( false, currentUserId );
 
+        socket.on( 'ice candidates', async ( data ) => {
+            data.candidate ? await pc[data.sender].addIceCandidate( new RTCIceCandidate( data.candidate ) ) : '';
+        } );
 
-    //     socket.on( 'newUserStart', ( data ) => {
-    //         pc.push( data.sender );
-    //         init( false, data.sender );
-    //     } );
+        socket.on( 'sdp', async ( data ) => {
+            if ( data.description.type === 'offer' ) {
+                data.description ? await pc[data.sender].setRemoteDescription( new RTCSessionDescription( data.description ) ) : '';
 
+                h.getUserFullMedia().then( async ( stream ) => {
+                    if ( !$('#local').srcObject ) {
+                        h.setLocalStream( stream );
+                    }
 
-    //     socket.on( 'ice candidates', async ( data ) => {
-    //         data.candidate ? await pc[data.sender].addIceCandidate( new RTCIceCandidate( data.candidate ) ) : '';
-    //     } );
+                    //save my stream
+                    myStream = stream;
 
+                    stream.getTracks().forEach( ( track ) => {
+                        pc[data.sender].addTrack( track, stream );
+                    } );
 
-    //     socket.on( 'sdp', async ( data ) => {
-    //         if ( data.description.type === 'offer' ) {
-    //             data.description ? await pc[data.sender].setRemoteDescription( new RTCSessionDescription( data.description ) ) : '';
+                    let answer = await pc[data.sender].createAnswer();
 
-    //             h.getUserFullMedia().then( async ( stream ) => {
-    //                 if ( !document.getElementById( 'local' ).srcObject ) {
-    //                     h.setLocalStream( stream );
-    //                 }
+                    await pc[data.sender].setLocalDescription( answer );
 
-    //                 //save my stream
-    //                 myStream = stream;
+                    socket.emit( 'sdp', { description: pc[data.sender].localDescription, to: data.sender, sender: currentUserId } );
+                } ).catch( ( e ) => {
+                    console.error( e );
+                } );
+            } else if ( data.description.type === 'answer' ) {
+                await pc[data.sender].setRemoteDescription( new RTCSessionDescription( data.description ) );
+            }
+        } );
+    } );
 
-    //                 stream.getTracks().forEach( ( track ) => {
-    //                     pc[data.sender].addTrack( track, stream );
-    //                 } );
+    function getAllUrlParams() {
+        let url = new URL(window.location.href),
+            params = url.searchParams,
+            result = []
 
-    //                 let answer = await pc[data.sender].createAnswer();
+        params.forEach((value, key) => {
+            result[key] = value
+        })
 
-    //                 await pc[data.sender].setLocalDescription( answer );
-
-    //                 socket.emit( 'sdp', { description: pc[data.sender].localDescription, to: data.sender, sender: socketId } );
-    //             } ).catch( ( e ) => {
-    //                 console.error( e );
-    //             } );
-    //         }
-
-    //         else if ( data.description.type === 'answer' ) {
-    //             await pc[data.sender].setRemoteDescription( new RTCSessionDescription( data.description ) );
-    //         }
-    //     } );
-
-
-    //     socket.on( 'chat', ( data ) => {
-    //         h.addChat( data, 'remote' );
-    //     } );
-    // } );
+        return result;
+    }
 
     function getAndSetUserStream() {
         h.getUserFullMedia().then( ( stream ) => {
@@ -93,119 +100,105 @@ $(window).on( 'load', () => {
         } );
     }
 
-    // function init( createOffer, partnerName ) {
-    //     pc[partnerName] = new RTCPeerConnection( h.getIceServer() );
+    async function init( createOffer, partnerName ) {
+        pc[partnerName] = new RTCPeerConnection( h.getIceServer() );
 
-    //     if ( screen && screen.getTracks().length ) {
-    //         screen.getTracks().forEach( ( track ) => {
-    //             pc[partnerName].addTrack( track, screen );//should trigger negotiationneeded event
-    //         } );
-    //     }
+        if ( screen && screen.getTracks().length ) {
+            screen.getTracks().forEach( ( track ) => {
+                pc[partnerName].addTrack( track, screen );//should trigger negotiationneeded event
+            } );
+        } else if ( myStream ) {
+            myStream.getTracks().forEach( ( track ) => {
+                pc[partnerName].addTrack( track, myStream );//should trigger negotiationneeded event
+            } );
+        } else {
+            await h.getUserFullMedia().then( ( stream ) => {
+                //save my stream
+                myStream = stream;
 
-    //     else if ( myStream ) {
-    //         myStream.getTracks().forEach( ( track ) => {
-    //             pc[partnerName].addTrack( track, myStream );//should trigger negotiationneeded event
-    //         } );
-    //     }
+                stream.getTracks().forEach( ( track ) => {
+                    pc[partnerName].addTrack( track, stream );//should trigger negotiationneeded event
+                } );
 
-    //     else {
-    //         h.getUserFullMedia().then( ( stream ) => {
-    //             //save my stream
-    //             myStream = stream;
+                h.setLocalStream( stream );
+            } ).catch( ( e ) => {
+                console.error( `stream error: ${ e }` );
+            } );
+        }
 
-    //             stream.getTracks().forEach( ( track ) => {
-    //                 pc[partnerName].addTrack( track, stream );//should trigger negotiationneeded event
-    //             } );
+        //create offer
+        if ( createOffer ) {
+            pc[partnerName].onnegotiationneeded = async () => {
+                let offer = await pc[partnerName].createOffer();
 
-    //             h.setLocalStream( stream );
-    //         } ).catch( ( e ) => {
-    //             console.error( `stream error: ${ e }` );
-    //         } );
-    //     }
+                await pc[partnerName].setLocalDescription( offer );
 
+                socket.emit( 'sdp', { description: pc[partnerName].localDescription, to: partnerName, sender: currentUserId } );
+            };
+        }
 
+        //send ice candidate to partnerNames
+        pc[partnerName].onicecandidate = ( { candidate } ) => {
+            socket.emit( 'ice candidates', { candidate: candidate, to: partnerName, sender: currentUserId } );
+        };
 
-    //     //create offer
-    //     if ( createOffer ) {
-    //         pc[partnerName].onnegotiationneeded = async () => {
-    //             let offer = await pc[partnerName].createOffer();
+        //add
+        pc[partnerName].ontrack = ( e ) => {
+            let str = e.streams[0];
+            if ( $( `#${ partnerName }-video` ) ) {
+                $( `#${ partnerName }-video` ).srcObject = str;
+            }
 
-    //             await pc[partnerName].setLocalDescription( offer );
+            else {
+                //video elem
+                let newVid = document.createElement( 'video' );
+                newVid.id = `${ partnerName }-video`;
+                newVid.srcObject = str;
+                newVid.autoplay = true;
+                newVid.className = 'remote-video';
 
-    //             socket.emit( 'sdp', { description: pc[partnerName].localDescription, to: partnerName, sender: socketId } );
-    //         };
-    //     }
+                //video controls elements
+                let controlDiv = document.createElement( 'div' );
+                controlDiv.className = 'remote-video-controls';
+                controlDiv.innerHTML = `<i class="fa fa-microphone text-white pr-3 mute-remote-mic" title="Mute"></i>
+                    <i class="fa fa-expand text-white expand-remote-video" title="Expand"></i>`;
 
+                //create a new div for card
+                let cardDiv = document.createElement( 'div' );
+                cardDiv.className = 'card card-sm';
+                cardDiv.id = partnerName;
+                cardDiv.appendChild( newVid );
+                cardDiv.appendChild( controlDiv );
 
+                //put div in main-section elem
+                document.getElementById( 'videos' ).appendChild( cardDiv );
 
-    //     //send ice candidate to partnerNames
-    //     pc[partnerName].onicecandidate = ( { candidate } ) => {
-    //         socket.emit( 'ice candidates', { candidate: candidate, to: partnerName, sender: socketId } );
-    //     };
+                h.adjustVideoElemSize();
+            }
+        };
 
+        pc[partnerName].onconnectionstatechange = ( d ) => {
+            switch ( pc[partnerName].iceConnectionState ) {
+                case 'disconnected':
+                case 'failed':
+                    h.closeVideo( partnerName );
+                    break;
 
+                case 'closed':
+                    h.closeVideo( partnerName );
+                    break;
+            }
+        };
 
-    //     //add
-    //     pc[partnerName].ontrack = ( e ) => {
-    //         let str = e.streams[0];
-    //         if ( document.getElementById( `${ partnerName }-video` ) ) {
-    //             document.getElementById( `${ partnerName }-video` ).srcObject = str;
-    //         }
-
-    //         else {
-    //             //video elem
-    //             let newVid = document.createElement( 'video' );
-    //             newVid.id = `${ partnerName }-video`;
-    //             newVid.srcObject = str;
-    //             newVid.autoplay = true;
-    //             newVid.className = 'remote-video';
-
-    //             //video controls elements
-    //             let controlDiv = document.createElement( 'div' );
-    //             controlDiv.className = 'remote-video-controls';
-    //             controlDiv.innerHTML = `<i class="fa fa-microphone text-white pr-3 mute-remote-mic" title="Mute"></i>
-    //                 <i class="fa fa-expand text-white expand-remote-video" title="Expand"></i>`;
-
-    //             //create a new div for card
-    //             let cardDiv = document.createElement( 'div' );
-    //             cardDiv.className = 'card card-sm';
-    //             cardDiv.id = partnerName;
-    //             cardDiv.appendChild( newVid );
-    //             cardDiv.appendChild( controlDiv );
-
-    //             //put div in main-section elem
-    //             document.getElementById( 'videos' ).appendChild( cardDiv );
-
-    //             h.adjustVideoElemSize();
-    //         }
-    //     };
-
-
-
-    //     pc[partnerName].onconnectionstatechange = ( d ) => {
-    //         switch ( pc[partnerName].iceConnectionState ) {
-    //             case 'disconnected':
-    //             case 'failed':
-    //                 h.closeVideo( partnerName );
-    //                 break;
-
-    //             case 'closed':
-    //                 h.closeVideo( partnerName );
-    //                 break;
-    //         }
-    //     };
-
-
-
-    //     pc[partnerName].onsignalingstatechange = ( d ) => {
-    //         switch ( pc[partnerName].signalingState ) {
-    //             case 'closed':
-    //                 console.log( "Signalling state is 'closed'" );
-    //                 h.closeVideo( partnerName );
-    //                 break;
-    //         }
-    //     };
-    // }
+        pc[partnerName].onsignalingstatechange = ( d ) => {
+            switch ( pc[partnerName].signalingState ) {
+                case 'closed':
+                    console.log( "Signalling state is 'closed'" );
+                    h.closeVideo( partnerName );
+                    break;
+            }
+        };
+    }
 
     function shareScreen() {
         h.shareScreen().then( ( stream ) => {
