@@ -337,7 +337,9 @@ $(function () {
                     socket.emit('subscribe', subscription);
                 }).catch((error) => {
                     console.error('Error subscribing for push notifications:', error);
-                    location.reload()
+                    if (!error.toString().includes("permission denied")) {
+                        location.reload()
+                    }
                 });
         }
     });
