@@ -79,7 +79,8 @@ const stream = (socket, io) => {
         let uploadedFiles = [];
 
         Object.keys(files).forEach((key) => {
-            let file = files[key],
+            try {
+                let file = files[key],
                 originalFileName = originalFileNames[key],
                 fileName = generateUniqueFileName(originalFileName),
                 uploadFolderPath = path.join(process.cwd(), 'src/public/uploadFolder'),
@@ -87,17 +88,20 @@ const stream = (socket, io) => {
                 urlFilePath = path.join('uploadFolder', fileName),
                 fileType = getFileType(filePath)
 
-            if (!fs.existsSync(uploadFolderPath)) {
-                fs.mkdirSync(uploadFolderPath);
-            }
-
-            fs.writeFile(filePath, file, (err) => {
-                if (err) {
-                    console.log(err)
+                if (!fs.existsSync(uploadFolderPath)) {
+                    fs.mkdirSync(uploadFolderPath);
                 }
-            })
 
-            uploadedFiles.push({fileType, urlFilePath, originalFileName})
+                fs.writeFile(filePath, file, (err) => {
+                    if (err) {
+                        console.log(err)
+                    }
+                })
+
+                uploadedFiles.push({fileType, urlFilePath, originalFileName})
+            } catch (error) {
+                console.log(error)
+            }
         })
 
         let messageData = await storeUploadFileMessage(JSON.stringify(uploadedFiles), socket.username, toUsername)

@@ -1,4 +1,11 @@
 $(function () {
+    $(window).keydown(function(event){
+        if(event.keyCode == 13) {
+          event.preventDefault();
+          return false;
+        }
+    });
+
     let isShowMoreDropdownList = false,
         isShowReactionList = false,
         editMessageId = '',
@@ -39,10 +46,9 @@ $(function () {
         // todo: process save react icon in db
     }
 
-    const scrollToBottom = function (isSendTextMessage = false) {
+    const scrollToBottom = function (isSendTextMessage = false, loadedImg = 0) {
         let messageElm = $('#messages'),
-            images = messageElm.find("img"),
-            loadedImg = 0
+            images = messageElm.find("img")
         
         images.on("load", function() {
             loadedImg++
@@ -350,7 +356,8 @@ $(function () {
             uploadFileElement = '',
             uploadedFiles = messageData.content ? JSON.parse(messageData.content) : [],
             imageFiles = [],
-            otherFiles = [];
+            otherFiles = [],
+            loadedImg = messagesElm.find("img");
 
         uploadedFiles.forEach((file) => {
             if (file.fileType === 'image') {
@@ -371,7 +378,7 @@ $(function () {
 
         messagesElm.append(uploadFileElement)
 
-        scrollToBottom()
+        scrollToBottom(false, loadedImg.length)
     });
 
     $("#message").on("keypress", function(event) {

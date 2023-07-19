@@ -3,7 +3,7 @@ module.exports = {
         {
             name: "app-chat",
             script: "./src/app.js",
-            watch: true,
+            watch: false,
             ignore_watch: [
                 ".git",
                 ".md",
