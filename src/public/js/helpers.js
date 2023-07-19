@@ -172,8 +172,8 @@ export default {
     setLocalStream( stream, mirrorMode = true ) {
         const localVidElem = $( '#local' );
 
-        localVidElem.srcObject = stream;
-        mirrorMode ? localVidElem.classList.add( 'mirror-mode' ) : localVidElem.classList.remove( 'mirror-mode' );
+        localVidElem[0].srcObject = stream;
+        mirrorMode ? localVidElem.addClass( 'mirror-mode' ) : localVidElem.removeClass( 'mirror-mode' );
     },
 
     adjustVideoElemSize() {

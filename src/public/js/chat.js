@@ -39,7 +39,7 @@ $(function () {
         // todo: process save react icon in db
     }
 
-    const scrollToBottom = function () {
+    const scrollToBottom = function (isSendTextMessage = false) {
         let messageElm = $('#messages'),
             images = messageElm.find("img"),
             loadedImg = 0
@@ -51,7 +51,7 @@ $(function () {
             }
         })
 
-        if (images.length === 0) {
+        if (images.length === 0 || isSendTextMessage) {
             $('#messages')[0].scrollTop = $('#messages')[0].scrollHeight
         }
     }
@@ -201,7 +201,7 @@ $(function () {
             addTriggerMessageActions(id)
         }
 
-        scrollToBottom()
+        scrollToBottom(true)
     })
 
     socket.on('update reactions', (data) => {

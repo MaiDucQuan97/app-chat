@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "env-cmd -f ./config/.env pm2 start ./config/pm2.config.js",
+    "dev-without-pm2": "env-cmd -f ./config/dev.env node src/app.js",
     "dev": "env-cmd -f ./config/dev.env pm2 start ./config/pm2.config.js",
     "compile": "lessc src/public/css/reaction-icon.less src/public/css/reaction-icon.css"
   },
