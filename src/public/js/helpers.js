@@ -8,8 +8,8 @@ export default {
     },
 
     closeVideo( elemId ) {
-        if ( document.getElementById( elemId ) ) {
-            document.getElementById( elemId ).remove();
+        if ( $(`#${elemId}`).length ) {
+            $(`#${elemId}`).remove();
             this.adjustVideoElemSize();
         }
     },
@@ -97,14 +97,14 @@ export default {
         return {
             iceServers: [
                 {
-                    urls: ["stun:eu-turn4.xirsys.com"]
+                    urls: ["stun:stun.l.google.com:19302"]
                 },
                 {
-                    username: "ml0jh0qMKZKd9P_9C0UIBY2G0nSQMCFBUXGlk6IXDJf8G2uiCymg9WwbEJTMwVeiAAAAAF2__hNSaW5vbGVl",
-                    credential: "4dd454a6-feee-11e9-b185-6adcafebbb45",
+                    username: "28224511:1379330808",
+                    credential: "JZEOEt2V3Qb0y27GRntt2u2PAYA=",
                     urls: [
-                        "turn:eu-turn4.xirsys.com:80?transport=udp",
-                        "turn:eu-turn4.xirsys.com:3478?transport=tcp"
+                        "turn:192.158.29.39:3478?transport=udp",
+                        "turn:192.158.29.39:3478?transport=tcp"
                     ]
                 }
             ]
@@ -185,8 +185,8 @@ export default {
     },
 
     adjustVideoElemSize() {
-        let elem = document.getElementsByClassName( 'card' );
-        let totalRemoteVideosDesktop = elem.length;
+        let cardElms = $('.card');
+        let totalRemoteVideosDesktop = cardElms.length;
         let newWidth = totalRemoteVideosDesktop <= 2 ? '50%' : (
             totalRemoteVideosDesktop == 3 ? '33.33%' : (
                 totalRemoteVideosDesktop <= 8 ? '25%' : (
@@ -201,9 +201,7 @@ export default {
             )
         );
 
-        for ( let i = 0; i < totalRemoteVideosDesktop; i++ ) {
-            elem[i].style.width = newWidth;
-        }
+        cardElms.css('width', newWidth);
     },
 
     createDemoRemotes( str, total = 6 ) {

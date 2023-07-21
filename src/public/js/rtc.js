@@ -3,10 +3,11 @@ import h from './helpers.js';
 $(window).on( 'load', () => {
     $('.room-comm').removeAttr( 'hidden' );
 
+    const maxReconnectAttempts = 5;
+
     var pc = [];
-
-    let socket = io();
-
+    var reconnectAttempts = 0;
+    var socket = io();
     var allUrlParams = getAllUrlParams(),
         toUserId = allUrlParams['toUserId'] ?? '',
         currentUserId = allUrlParams['fromUserId'] ?? '',
@@ -94,24 +95,27 @@ $(window).on( 'load', () => {
         } );
     }
 
-    async function init( createOffer, partnerName ) {
+    async function init( createOffer, partnerName, isReconnect = false) {
+        if (isReconnect) {
+            pc[partnerName].close()
+        }
+
         pc[partnerName] = new RTCPeerConnection( h.getIceServer() );
 
         if ( screen && screen.getTracks().length ) {
             screen.getTracks().forEach( ( track ) => {
-                pc[partnerName].addTrack( track, screen );//should trigger negotiationneeded event
+                pc[partnerName].addTrack( track, screen );
             } );
         } else if ( myStream ) {
             myStream.getTracks().forEach( ( track ) => {
-                pc[partnerName].addTrack( track, myStream );//should trigger negotiationneeded event
+                pc[partnerName].addTrack( track, myStream );
             } );
         } else {
             await h.getUserFullMedia().then( ( stream ) => {
-                //save my stream
                 myStream = stream;
 
                 stream.getTracks().forEach( ( track ) => {
-                    pc[partnerName].addTrack( track, stream );//should trigger negotiationneeded event
+                    pc[partnerName].addTrack( track, stream );
                 } );
 
                 h.setLocalStream( stream );
@@ -123,7 +127,12 @@ $(window).on( 'load', () => {
         //create offer
         if ( createOffer ) {
             pc[partnerName].onnegotiationneeded = async () => {
-                let offer = await pc[partnerName].createOffer();
+                const offerOptions = {
+                    offerToReceiveAudio: true, // Preserve the order of audio m-line
+                    offerToReceiveVideo: true, // Preserve the order of video m-line
+                };
+
+                let offer = await pc[partnerName].createOffer(offerOptions);
 
                 await pc[partnerName].setLocalDescription( offer );
 
@@ -139,33 +148,31 @@ $(window).on( 'load', () => {
         //add
         pc[partnerName].ontrack = ( e ) => {
             let str = e.streams[0];
-            if ( $( `#${ partnerName }-video` ) ) {
-                $( `#${ partnerName }-video` ).srcObject = str;
-            }
-
-            else {
+            if ( $(`#${partnerName}-video`).length) {
+                $(`#${partnerName}-video`)[0].srcObject = str;
+            } else {
                 //video elem
-                let newVid = document.createElement( 'video' );
-                newVid.id = `${ partnerName }-video`;
-                newVid.srcObject = str;
-                newVid.autoplay = true;
-                newVid.className = 'remote-video';
+                let newVid = $('<video></video>');
+                newVid.attr('id', `${partnerName}-video`);
+                newVid[0].srcObject = str;
+                newVid.attr('autoplay', true);
+                newVid.addClass('remote-video');
 
                 //video controls elements
-                let controlDiv = document.createElement( 'div' );
-                controlDiv.className = 'remote-video-controls';
-                controlDiv.innerHTML = `<i class="fa fa-microphone text-white pr-3 mute-remote-mic" title="Mute"></i>
-                    <i class="fa fa-expand text-white expand-remote-video" title="Expand"></i>`;
+                let controlDiv = $('<div></div>');
+                controlDiv.addClass('remote-video-controls');
+                controlDiv.html(`<i class="fa fa-microphone text-white pr-3 mute-remote-mic" title="Mute"></i>
+                <i class="fa fa-expand text-white expand-remote-video" title="Expand"></i>`);
 
                 //create a new div for card
-                let cardDiv = document.createElement( 'div' );
-                cardDiv.className = 'card card-sm';
-                cardDiv.id = partnerName;
-                cardDiv.appendChild( newVid );
-                cardDiv.appendChild( controlDiv );
+                let cardDiv = $('<div></div>');
+                cardDiv.addClass('card card-sm');
+                cardDiv.attr('id', partnerName);
+                cardDiv.append( newVid );
+                cardDiv.append( controlDiv );
 
                 //put div in main-section elem
-                document.getElementById( 'videos' ).appendChild( cardDiv );
+                $('#videos').append(cardDiv);
 
                 h.adjustVideoElemSize();
             }
@@ -174,6 +181,14 @@ $(window).on( 'load', () => {
         pc[partnerName].onconnectionstatechange = ( d ) => {
             switch ( pc[partnerName].iceConnectionState ) {
                 case 'disconnected':
+                    if (reconnectAttempts < maxReconnectAttempts) {
+                        reconnectAttempts++;
+                        setTimeout(() => init(createOffer, partnerName, true), 3000);
+                    } else {
+                        console.log('Max reconnection attempts reached. Failed to reconnect.');
+                        h.closeVideo( partnerName );
+                    }
+                    break;
                 case 'failed':
                     h.closeVideo( partnerName );
                     break;
