@@ -108,13 +108,18 @@ const stream = (socket, io) => {
         socket.emit('uploadResponse', messageData );
     });
 
-    // socket.on( 'subscribe_video_call', ( data ) => {
-    //     io.to(data.toId).emit( 'new user', { socketId: data.socketId } );
-    // } );
+    socket.on( 'subscribe_video_call', ( data ) => {
+        socket.join( data.room );
+        socket.join( data.socketId );
 
-    // socket.on( 'newUserStart', ( data ) => {
-    //     socket.to( data.to ).emit( 'newUserStart', { sender: data.sender } );
-    // } );
+        if ( socket.adapter.rooms.has(data.room) === true ) {
+            socket.to( data.room ).emit( 'new user', { socketId: data.socketId } );
+        }
+    } );
+
+    socket.on( 'newUserStart', ( data ) => {
+        socket.to( data.to ).emit( 'newUserStart', { sender: data.sender } );
+    } );
 
     socket.on( 'sdp', ( data ) => {
         io.to( data.to ).emit( 'sdp', { description: data.description, sender: data.sender } );

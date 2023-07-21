@@ -1,4 +1,12 @@
 export default {
+    createUniqueString(str1, str2) {
+        const sortedStrings = [str1, str2].sort();
+      
+        const uniqueString = sortedStrings.join('-');
+      
+        return uniqueString;
+    },
+
     closeVideo( elemId ) {
         if ( document.getElementById( elemId ) ) {
             document.getElementById( elemId ).remove();

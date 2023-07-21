@@ -15,34 +15,28 @@ $(window).on( 'load', () => {
         recordedStream = [],
         mediaRecorder = '';
 
+    const room = h.createUniqueString(currentUserId, toUserId)
+
     //Get user video by default
     getAndSetUserStream();
 
     socket.on( 'connect', () => {
-        // socket.on('current_user_id', (userID) => {
-        //     currentUserId = userID;
-        // });
+        socket.emit( 'subscribe_video_call', {
+            room: room,
+            toId: toUserId,
+            socketId: currentUserId
+        } );
 
-        // socket.emit( 'subscribe_video_call', {
-        //     toId: toUserId,
-        //     socketId: currentUserId
-        // } );
+        socket.on( 'new user', ( data ) => {
+            socket.emit( 'newUserStart', { to: data.socketId, sender: currentUserId } );
+            pc.push( data.socketId );
+            init( true, data.socketId );
+        } );
 
-        // socket.on( 'new user', ( data ) => {
-        //     socket.emit( 'newUserStart', { to: toUserId, sender: currentUserId } );
-        //     pc.push( data.socketId );
-        //     init( true, data.socketId );
-        // } );
-
-        // socket.on( 'newUserStart', ( data ) => {
-        //     pc.push( data.sender );
-        //     init( false, data.sender );
-        // } );
-
-        pc.push( toUserId );
-        init( true, toUserId );
-        pc.push( currentUserId );
-        init( false, currentUserId );
+        socket.on( 'newUserStart', ( data ) => {
+            pc.push( data.sender );
+            init( false, data.sender );
+        } );
 
         socket.on( 'ice candidates', async ( data ) => {
             data.candidate ? await pc[data.sender].addIceCandidate( new RTCIceCandidate( data.candidate ) ) : '';
