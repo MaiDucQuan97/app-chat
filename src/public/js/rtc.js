@@ -124,6 +124,8 @@ $(window).on( 'load', () => {
             } );
         }
 
+        h.addAllRemoteVideosExcept(pc[partnerName], toUserId)
+
         //create offer
         if ( createOffer ) {
             pc[partnerName].onnegotiationneeded = async () => {
@@ -147,35 +149,7 @@ $(window).on( 'load', () => {
 
         //add
         pc[partnerName].ontrack = ( e ) => {
-            let str = e.streams[0];
-            if ( $(`#${partnerName}-video`).length) {
-                $(`#${partnerName}-video`)[0].srcObject = str;
-            } else {
-                //video elem
-                let newVid = $('<video></video>');
-                newVid.attr('id', `${partnerName}-video`);
-                newVid[0].srcObject = str;
-                newVid.attr('autoplay', true);
-                newVid.addClass('remote-video');
-
-                //video controls elements
-                let controlDiv = $('<div></div>');
-                controlDiv.addClass('remote-video-controls');
-                controlDiv.html(`<i class="fa fa-microphone text-white pr-3 mute-remote-mic" title="Mute"></i>
-                <i class="fa fa-expand text-white expand-remote-video" title="Expand"></i>`);
-
-                //create a new div for card
-                let cardDiv = $('<div></div>');
-                cardDiv.addClass('card card-sm');
-                cardDiv.attr('id', partnerName);
-                cardDiv.append( newVid );
-                cardDiv.append( controlDiv );
-
-                //put div in main-section elem
-                $('#videos').append(cardDiv);
-
-                h.adjustVideoElemSize();
-            }
+            h.addRemoteVideo(e.streams[0], partnerName)
         };
 
         pc[partnerName].onconnectionstatechange = ( d ) => {

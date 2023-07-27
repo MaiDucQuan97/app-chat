@@ -216,39 +216,42 @@ export default {
         cardElms.css('width', newWidth);
     },
 
-    createDemoRemotes( str, total = 6 ) {
-        let i = 0;
-
-        let testInterval = setInterval( () => {
-            let newVid = document.createElement( 'video' );
-            newVid.id = `demo-${ i }-video`;
-            newVid.srcObject = str;
-            newVid.autoplay = true;
-            newVid.className = 'remote-video';
+    addRemoteVideo(stream, partnerName) {
+        if ( $(`#${partnerName}-video`).length) {
+            $(`#${partnerName}-video`)[0].srcObject = stream;
+        } else {
+            //video elem
+            let newVid = $('<video></video>');
+            newVid.attr('id', `${partnerName}-video`);
+            newVid[0].srcObject = stream;
+            newVid.attr('autoplay', true);
+            newVid.attr('playsinline', true)
+            newVid.addClass('remote-video');
 
             //video controls elements
-            let controlDiv = document.createElement( 'div' );
-            controlDiv.className = 'remote-video-controls';
-            controlDiv.innerHTML = `<i class="fa fa-microphone text-white pr-3 mute-remote-mic" title="Mute"></i>
-                <i class="fa fa-expand text-white expand-remote-video" title="Expand"></i>`;
+            let controlDiv = $('<div></div>');
+            controlDiv.addClass('remote-video-controls');
+            controlDiv.html(`<i class="fa fa-microphone text-white pr-3 mute-remote-mic" title="Mute"></i>
+            <i class="fa fa-expand text-white expand-remote-video" title="Expand"></i>`);
 
             //create a new div for card
-            let cardDiv = document.createElement( 'div' );
-            cardDiv.className = 'card card-sm';
-            cardDiv.id = `demo-${ i }`;
-            cardDiv.appendChild( newVid );
-            cardDiv.appendChild( controlDiv );
+            let cardDiv = $('<div></div>');
+            cardDiv.addClass('card card-sm');
+            cardDiv.attr('id', partnerName);
+            cardDiv.append( newVid );
+            cardDiv.append( controlDiv );
 
             //put div in main-section elem
-            document.getElementById( 'videos' ).appendChild( cardDiv );
+            $('#videos').append(cardDiv);
 
             this.adjustVideoElemSize();
+        }
+    },
 
-            i++;
-
-            if ( i == total ) {
-                clearInterval( testInterval );
-            }
-        }, 2000 );
+    // add only one video of sender (video call between 2 people)
+    addAllRemoteVideosExcept(senderPeer, name) {
+        senderPeer.getRemoteStreams().forEach( (stream) => {
+            this.addRemoteVideo(stream, name)
+        })
     }
 };
