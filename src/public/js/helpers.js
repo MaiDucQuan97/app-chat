@@ -97,16 +97,28 @@ export default {
         return {
             iceServers: [
                 {
-                    urls: ["stun:stun.l.google.com:19302"]
+                  urls: "stun:stun.relay.metered.ca:80",
                 },
                 {
-                    username: "28224511:1379330808",
-                    credential: "JZEOEt2V3Qb0y27GRntt2u2PAYA=",
-                    urls: [
-                        "turn:192.158.29.39:3478?transport=udp",
-                        "turn:192.158.29.39:3478?transport=tcp"
-                    ]
-                }
+                  urls: "turn:a.relay.metered.ca:80",
+                  username: "9fe8000ce00f61b6860c1207",
+                  credential: "IqHJW0a/5rviX05A",
+                },
+                {
+                  urls: "turn:a.relay.metered.ca:80?transport=tcp",
+                  username: "9fe8000ce00f61b6860c1207",
+                  credential: "IqHJW0a/5rviX05A",
+                },
+                {
+                  urls: "turn:a.relay.metered.ca:443",
+                  username: "9fe8000ce00f61b6860c1207",
+                  credential: "IqHJW0a/5rviX05A",
+                },
+                {
+                  urls: "turn:a.relay.metered.ca:443?transport=tcp",
+                  username: "9fe8000ce00f61b6860c1207",
+                  credential: "IqHJW0a/5rviX05A",
+                },
             ]
         };
     },
