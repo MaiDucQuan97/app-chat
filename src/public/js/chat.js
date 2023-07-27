@@ -30,7 +30,7 @@ $(function () {
                 selectedUsername = userList[0].username
             }
 
-            socket.emit('send message', {
+            socket.emit('sendMessage', {
                 message: messageValue,
                 id: editMessageId,
                 toId: selectedUserId,
@@ -41,7 +41,7 @@ $(function () {
     }
 
     const reactMessage = function (messageId, reaction) {
-        socket.emit('react message', { messageId, reaction });
+        socket.emit('reactMessage', { messageId, reaction });
 
         // todo: process save react icon in db
     }
@@ -177,7 +177,7 @@ $(function () {
         });
     }
 
-    socket.on("new message", function ({ messageData, from, to }) {
+    socket.on("newMessage", function ({ messageData, from, to }) {
         const id = messageData.id,
             isEdit = messageData.isEdit,
             message = messageData.message,
@@ -210,7 +210,7 @@ $(function () {
         scrollToBottom(true)
     })
 
-    socket.on('update reactions', (data) => {
+    socket.on('updateReactions', (data) => {
         const { messageId, reactions } = data;
         let reactionsId = generateElementId('message__reactions', messageId),
             reactionIconList = generateElementId('message__reactionlist', messageId),
@@ -318,11 +318,11 @@ $(function () {
         })
     })
 
-    socket.on('current_user_id', (userID) => {
+    socket.on('currentUserId', (userID) => {
         currentUserId = userID;
     });
 
-    socket.on('generate_new_subscription', async (publicKey) => {
+    socket.on('generateNewSubscription', async (publicKey) => {
         if ('serviceWorker' in navigator && 'PushManager' in window) {
             navigator.serviceWorker
                 .register('js/service-worker.js')

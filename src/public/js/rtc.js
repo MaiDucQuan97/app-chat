@@ -22,13 +22,13 @@ $(window).on( 'load', () => {
     getAndSetUserStream();
 
     socket.on( 'connect', () => {
-        socket.emit( 'subscribe_video_call', {
+        socket.emit( 'subscribeVideoCall', {
             room: room,
             toId: toUserId,
             socketId: currentUserId
         } );
 
-        socket.on( 'new user', ( data ) => {
+        socket.on( 'newUser', ( data ) => {
             socket.emit( 'newUserStart', { to: data.socketId, sender: currentUserId } );
             pc.push( data.socketId );
             init( true, data.socketId );
@@ -39,7 +39,7 @@ $(window).on( 'load', () => {
             init( false, data.sender );
         } );
 
-        socket.on( 'ice candidates', async ( data ) => {
+        socket.on( 'iceCandidates', async ( data ) => {
             data.candidate ? await pc[data.sender].addIceCandidate( new RTCIceCandidate( data.candidate ) ) : '';
         } );
 
