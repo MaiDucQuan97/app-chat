@@ -3,7 +3,7 @@ const path = require('path')
 
 const { generateMessage, generateMessageId , storeMessage } = require('../utils/messages')
 const { generateUniqueFileName, storeUploadFileMessage, getFileType } = require('../utils/uploadFiles')
-const { sendNotificationToClient, vapidKeys } = require('../utils/subscribe')
+const { sendMessageNotificationToClient, sendVideoNotificationToClient, vapidKeys } = require('../utils/subscribe')
 
 const connectedUsers = new Map()
 const messageReactions = {};
@@ -49,7 +49,7 @@ const stream = (socket, io) => {
             to: data.toId
         })
         await storeMessage({ messageData, recipientUsername: data.toUsername })
-        sendNotificationToClient(subscriptions[data.toId], messageData)
+        sendMessageNotificationToClient(subscriptions[data.toId], messageData)
     });
 
     socket.on('react message', (data) => {

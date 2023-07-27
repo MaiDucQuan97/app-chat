@@ -155,6 +155,9 @@ $(window).on( 'load', () => {
         pc[partnerName].onconnectionstatechange = ( d ) => {
             switch ( pc[partnerName].iceConnectionState ) {
                 case 'disconnected':
+                    h.closeVideo( partnerName );
+                    break;
+                case 'failed':
                     if (reconnectAttempts < maxReconnectAttempts) {
                         reconnectAttempts++;
                         setTimeout(() => init(createOffer, partnerName, true), 3000);
@@ -162,9 +165,6 @@ $(window).on( 'load', () => {
                         console.log('Max reconnection attempts reached. Failed to reconnect.');
                         h.closeVideo( partnerName );
                     }
-                    break;
-                case 'failed':
-                    h.closeVideo( partnerName );
                     break;
 
                 case 'closed':
