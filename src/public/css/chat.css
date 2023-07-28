@@ -182,6 +182,7 @@ button:disabled {
 .chat__main {
     display: flex;
     flex-direction: column;
+    position: relative;
     max-height: 95vh;
     flex: 85%;
 }
@@ -334,7 +335,6 @@ button:disabled {
 }
 
 .chat-nav {
-    background-color: #f2f2f2;
     position: sticky;
     top: 0;
     z-index: 100;
@@ -363,15 +363,60 @@ button:disabled {
     background-color: #ddd;
 }
 
-#notification {
+@keyframes ring {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+}
+
+#incomming-call-notification {
+    animation: ring 2s infinite;
     display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    padding: 15px;
-    background-color: #3b5998;
-    color: #fff;
+}
+
+#calling-notification {
+    display: none;
+}
+
+@keyframes ring {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+}
+
+.notification__content .answer-call {
+    color: green;
+    font-size: 1.5em;
+}
+
+.notification__content .reject-call {
+    color: red;
+    font-size: 1.5em;
+}
+
+.chat__callnotification {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
     border-radius: 5px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    color: #fff;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.notification__content .cancel-call {
+    color: red;
+    font-size: 1.5em;
 }

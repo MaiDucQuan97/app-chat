@@ -3,7 +3,7 @@ const path = require('path')
 
 const { generateMessage, generateMessageId , storeMessage } = require('../utils/messages')
 const { generateUniqueFileName, storeUploadFileMessage, getFileType } = require('../utils/uploadFiles')
-const { sendNotificationToClient, vapidKeys } = require('../utils/subscribe')
+const { sendMessageNotificationToClient, vapidKeys } = require('../utils/subscribe')
 
 const connectedUsers = new Map()
 const messageReactions = {};
@@ -108,13 +108,32 @@ const stream = (socket, io) => {
         socket.emit('uploadResponse', messageData );
     });
 
+    socket.on('calling', ({from, to}) => {
+        io.to( to ).emit( 'incommingCall', from);
+        setTimeout(() => {
+            io.to( to ).emit( 'cancelIncommingCall');
+            io.to( from ).emit( 'cancelIncommingCall');
+        }, 30000)
+    })
+
+    socket.on('cancelCalling', ({from, to}) => {
+        io.to( to ).emit( 'cancelIncommingCall');
+    })
+
+    socket.on('rejectIncommingCalling', (from) => {
+        io.to( from ).emit('callRejected')
+    })
+
+    socket.on('answerIncommingCalling', ({from, to}) => {
+        io.to( from ).emit('callAnswered', to)
+    })
+
     socket.on( 'subscribeVideoCall', ( data ) => {
         socket.join( data.room );
         socket.join( data.socketId );
 
         if ( socket.adapter.rooms.has(data.room) === true ) {
             socket.to( data.room ).emit( 'newUser', { socketId: data.socketId } );
-            socket.to( data.to ).emit( 'incommingCall', { from: data.socketId } );
         }
     } );
 

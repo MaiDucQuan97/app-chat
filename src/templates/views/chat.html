@@ -45,7 +45,30 @@
                 </ul>
             </div>
             <div id="messages" class="chat__messages"></div>
-            <div id="notification">You have an incoming call.</div>
+            <div class="chat__callnotification">
+                <div id="incomming-call-notification">
+                    <div class="notification__header">
+                        <span id="caller-name"></span> is calling...
+                    </div>
+                    <div class="notification__content">
+                        <button id="answer-call"><i class="phone icon answer-call"></i></button>
+                        <button id="reject-call"><i class="phone icon reject-call"></i></button>
+                    </div>
+                </div>
+                <div id="calling-notification">
+                    <div class="notification__header">
+                        Calling <span id="receiver-name"></span>
+                    </div>
+                    <div class="notification__content">
+                        <button id="cancel-call"><i class="phone icon cancel-call"></i></button>
+                    </div>
+                </div>
+            </div>
+        
+            <audio id="ringtone" preload="auto">
+                <source src="/media/iphone.mp3" type="audio/mpeg">
+            </audio>
+
             <div class="compose">
                 <form id="message-form">
                     <button type="button" id="openInputFileButton" title="Upload File"><i class="paperclip icon"></i></button>

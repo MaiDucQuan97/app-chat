@@ -12,7 +12,8 @@ $(function () {
         userList = [],
         selectedUserId = '',
         selectedUsername = '',
-        currentUserId = ''
+        currentUserId = '',
+        callingFrom = ''
 
     const socket = io();
     if (Notification.permission !== 'granted') {
@@ -26,8 +27,8 @@ $(function () {
             alert('Please enter name and message!!');
         } else {
             if (!selectedUserId && userList.length !== 0) {
-                selectedUserId = userList[0].id
-                selectedUsername = userList[0].username
+                selectedUserId = userList[currentUserId].id
+                selectedUsername = userList[currentUserId].username
             }
 
             socket.emit('sendMessage', {
@@ -161,8 +162,8 @@ $(function () {
         let originalFileNames = []
 
         if (!selectedUserId && userList.length !== 0) {
-            selectedUserId = userList[0].id
-            selectedUsername = userList[0].username
+            selectedUserId = userList[currentUserId].id
+            selectedUsername = userList[currentUserId].username
         }
         
         Object.keys(files).forEach((key) => {
@@ -175,6 +176,15 @@ $(function () {
             originalFileNames,
             toUsername: selectedUsername
         });
+    }
+
+    const hideAllCallingNotification = () => {
+        let ringtone = $('#ringtone')
+
+        ringtone[0].pause()
+        $('.chat__callnotification').hide()
+        $('#calling-notification').hide()
+        $('#incomming-call-notification').hide()
     }
 
     socket.on("newMessage", function ({ messageData, from, to }) {
@@ -233,11 +243,15 @@ $(function () {
     });
 
     socket.on('users', (users) => {
-        userList = this.users = users.sort((a, b) => {
+        this.users = users.sort((a, b) => {
             if (currentUserId && a.id === currentUserId) return -1;
             if (currentUserId && b.id === currentUserId) return 1;
             if (a.username < b.username) return -1;
             return a.username > b.username ? 1 : 0;
+        });
+
+        users.forEach((user) => {
+            userList[user.id] = user;
         });
 
         let userTemplateElm = $('#user-template'),
@@ -381,6 +395,39 @@ $(function () {
         scrollToBottom(false, loadedImg.length)
     });
 
+    socket.on('incommingCall', (from) => {
+        const ringtone = $('#ringtone'),
+              callerName = $('#caller-name');
+
+        callerName.text(userList[from].username)
+        $('.chat__callnotification').css('display', 'flex')
+        $('#calling-notification').hide()
+        $('#incomming-call-notification').show()
+        ringtone[0].play();
+
+        callingFrom = from
+    })
+
+    socket.on('cancelIncommingCall', () => {
+        const callerName = $('#caller-name');
+
+        callerName.text(null)
+        hideAllCallingNotification()
+
+        callingFrom = ''
+    })
+
+    socket.on('callRejected', () => {
+        hideAllCallingNotification()
+    })
+
+    socket.on('callAnswered', (to) => {
+        hideAllCallingNotification()
+
+        let redirectUrl = `/video?toUserId=${to}&fromUserId=${currentUserId}`
+        window.location.replace(redirectUrl)
+    })
+
     $("#message").on("keypress", function(event) {
         if (event.key === "Enter") {
             event.preventDefault();
@@ -388,8 +435,37 @@ $(function () {
     })
 
     $(document).on("click", "#video-call", () => {
-        let redirectUrl = `/video?toUserId=${selectedUserId}&fromUserId=${currentUserId}`
-        window.location.replace(redirectUrl)
+        socket.emit('calling', {
+            from: currentUserId,
+            to: selectedUserId
+        })
+        $('.chat__callnotification').css('display', 'flex')
+        $('#incomming-call-notification').hide()
+        $('#calling-notification').show()
+    })
+
+    $(document).on("click", "#cancel-call", () => {
+        hideAllCallingNotification()
+        socket.emit('cancelCalling', {
+            from: currentUserId,
+            to: selectedUserId
+        })
+    })
+    
+    $(document).on("click", "#reject-call", () => {
+        hideAllCallingNotification()
+        socket.emit('rejectIncommingCalling', callingFrom)
+    })
+
+    $(document).on("click", "#answer-call", () => {
+        hideAllCallingNotification()
+
+        socket.emit('answerIncommingCalling', {from: callingFrom, to: currentUserId})  
+
+        setTimeout(() => {
+            let redirectUrl = `/video?toUserId=${callingFrom}&fromUserId=${currentUserId}`
+            window.location.replace(redirectUrl)
+        }, 2000)
     })
 
     $("#sendMessage").on("click", function (e) {

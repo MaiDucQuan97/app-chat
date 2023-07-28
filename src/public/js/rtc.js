@@ -144,7 +144,7 @@ $(window).on( 'load', () => {
 
         //send ice candidate to partnerNames
         pc[partnerName].onicecandidate = ( { candidate } ) => {
-            socket.emit( 'ice candidates', { candidate: candidate, to: partnerName, sender: currentUserId } );
+            socket.emit( 'iceCandidates', { candidate: candidate, to: partnerName, sender: currentUserId } );
         };
 
         //add
