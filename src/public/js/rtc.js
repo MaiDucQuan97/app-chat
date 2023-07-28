@@ -267,7 +267,7 @@ $(window).on( 'load', () => {
         mediaRecorder.onstop = function () {
             toggleRecordingIcons( false );
 
-            h.saveRecordedStream( recordedStream, username );
+            h.saveRecordedStream( recordedStream, currentUserId );
 
             setTimeout( () => {
                 recordedStream = [];

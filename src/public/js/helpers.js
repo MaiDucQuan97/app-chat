@@ -1,3 +1,6 @@
+let isShowMoreDropdownList = false,
+    isShowReactionList = false;
+
 export default {
     createUniqueString(str1, str2) {
         const sortedStrings = [str1, str2].sort();
@@ -252,6 +255,140 @@ export default {
     addAllRemoteVideosExcept(senderPeer, name) {
         senderPeer.getRemoteStreams().forEach( (stream) => {
             this.addRemoteVideo(stream, name)
+        })
+    },
+
+    scrollToBottom(isSendTextMessage = false, loadedImg = 0) {
+        let messageElm = $('#messages'),
+            images = messageElm.find("img")
+        
+        images.on("load", function() {
+            loadedImg++
+            if (loadedImg == images.length) {
+                $('#messages')[0].scrollTop = $('#messages')[0].scrollHeight
+            }
+        })
+
+        images.on("error", function() {
+            loadedImg++
+            if (loadedImg == images.length) {
+                $('#messages')[0].scrollTop = $('#messages')[0].scrollHeight
+            }
+        })
+
+        if (images.length === 0 || isSendTextMessage) {
+            $('#messages')[0].scrollTop = $('#messages')[0].scrollHeight
+        }
+    },
+
+    reactMessage(messageId, reaction) {
+        socket.emit('reactMessage', { messageId, reaction });
+
+        // todo: process save react icon in db
+    },
+
+    generateElementId(name, id) {
+        return `${name}-${id}`
+    },
+
+    getMessageIdFromElementId(name, elementId) {
+        return elementId.substring(elementId.indexOf(name) + name.length)
+    },
+
+    deleteMessage (lineMessageId) {
+        let messageTextDeleted = `<div class='line-message' id=${lineMessageId}><p class='message deleted'>This message was deleted!</p></div>`
+        $(`#${lineMessageId}`).replaceWith(messageTextDeleted)
+
+        // todo: process delete message in db
+    },
+
+    urlBase64ToUint8Array(base64String) {
+        var padding = '='.repeat((4 - base64String.length % 4) % 4);
+        var base64 = (base64String + padding)
+            .replace(/\-/g, '+')
+            .replace(/_/g, '/');
+    
+        var rawData = window.atob(base64);
+        var outputArray = new Uint8Array(rawData.length);
+    
+        for (var i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+    },
+
+    hideAllCallingNotification() {
+        let ringtone = $('#ringtone')
+
+        ringtone[0].pause()
+        $('.chat__callnotification').hide()
+        $('#calling-notification').hide()
+        $('#incomming-call-notification').hide()
+    },
+
+    addTriggerMessageActions (id) {
+        let self = this,
+            lineMessageId = this.generateElementId('message', id),
+            messageId = this.generateElementId('message__container', id),
+            actionBoxId = this.generateElementId('message__action', id),
+            buttonReactionId = this.generateElementId('message__reactionbutton', id),
+            reactionIconList = this.generateElementId('message__reactionlist', id),
+            moreId = this.generateElementId('message__morebutton', id),
+            moreDropdownListId = this.generateElementId('message__dropdownlist', id),
+            moreButtonElement = $(`#${moreDropdownListId}`),
+            lineMessageElement = $(`#${lineMessageId}`),
+            actionBoxElement = $(`#${actionBoxId}`),
+            messageContentElement = $(`#${messageId} .message__content`),
+            reactionIconListElement = $(`#${reactionIconList}`)
+
+        $(`#${moreId}`).on("click", function () {
+            if (moreButtonElement.css('display') == 'none') {
+                isShowMoreDropdownList = true
+                moreButtonElement.show()
+                actionBoxElement.css('display', 'flex')
+                lineMessageElement.css('background-color', '#F2F3F5')
+            } else {
+                isShowMoreDropdownList = false
+                moreButtonElement.hide()
+                actionBoxElement.hide()
+                lineMessageElement.css('background-color', '')
+            }
+        })
+
+        $(`#${moreDropdownListId} .delete`).on("click", function () {
+            self.deleteMessage(lineMessageId)
+            isShowMoreDropdownList = false
+        })
+
+        $(`#${moreDropdownListId} .edit`).on("click", function () {
+            moreButtonElement.hide()
+            lineMessageElement.css('background-color', '#FFF6D6')
+            $("#message").val(messageContentElement.text()).css('background-color', '#FFF6D6')
+            editMessageId = self.getMessageIdFromElementId('message__container-', messageId)
+        })
+
+        $(`#${lineMessageId}`).hover(function () {
+            if (!isShowMoreDropdownList && !isShowReactionList) {
+                $(this).css('background-color', '#F2F3F5')
+                $(this).find('.message__action').css('display', 'flex')
+            }
+        }, function () {
+            if (!isShowMoreDropdownList && !isShowReactionList) {
+                $(this).css('background-color', '')
+                $(this).find('.message__action').css('display', 'none')
+            }
+        })
+
+        $(`#${buttonReactionId}`).on("click", function () {
+            const newOpacity = isShowReactionList ? 0 : 1;
+
+            reactionIconListElement.css("opacity", newOpacity);
+            isShowReactionList = !isShowReactionList;
+        })
+
+        $(`#${reactionIconList} div.icon`).on("click", function () {
+            let messageId = self.getMessageIdFromElementId('message__reactionlist-', reactionIconList)
+            self.reactMessage(messageId, $(this).attr("data-title").toLowerCase())
         })
     }
 };

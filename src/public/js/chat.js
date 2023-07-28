@@ -1,4 +1,6 @@
-$(function () {
+import h from './helpers.js';
+
+$(window).on( 'load', () => {
     $(window).keydown(function(event){
         if(event.keyCode == 13) {
           event.preventDefault();
@@ -6,9 +8,7 @@ $(function () {
         }
     });
 
-    let isShowMoreDropdownList = false,
-        isShowReactionList = false,
-        editMessageId = '',
+    let editMessageId = '',
         userList = [],
         selectedUserId = '',
         selectedUsername = '',
@@ -41,123 +41,6 @@ $(function () {
         }
     }
 
-    const reactMessage = function (messageId, reaction) {
-        socket.emit('reactMessage', { messageId, reaction });
-
-        // todo: process save react icon in db
-    }
-
-    const scrollToBottom = function (isSendTextMessage = false, loadedImg = 0) {
-        let messageElm = $('#messages'),
-            images = messageElm.find("img")
-        
-        images.on("load", function() {
-            loadedImg++
-            if (loadedImg == images.length) {
-                $('#messages')[0].scrollTop = $('#messages')[0].scrollHeight
-            }
-        })
-
-        if (images.length === 0 || isSendTextMessage) {
-            $('#messages')[0].scrollTop = $('#messages')[0].scrollHeight
-        }
-    }
-
-    const generateElementId = function (name, id) {
-        return `${name}-${id}`
-    }
-
-    const getMessageIdFromElementId = function (name, elementId) {
-        return elementId.substring(elementId.indexOf(name) + name.length)
-    }
-
-    const deleteMessage = function (lineMessageId) {
-        let messageTextDeleted = `<div class='line-message' id=${lineMessageId}><p class='message deleted'>This message was deleted!</p></div>`
-        $(`#${lineMessageId}`).replaceWith(messageTextDeleted)
-
-        // todo: process delete message in db
-    }
-
-    const urlBase64ToUint8Array = function (base64String) {
-        var padding = '='.repeat((4 - base64String.length % 4) % 4);
-        var base64 = (base64String + padding)
-            .replace(/\-/g, '+')
-            .replace(/_/g, '/');
-    
-        var rawData = window.atob(base64);
-        var outputArray = new Uint8Array(rawData.length);
-    
-        for (var i = 0; i < rawData.length; ++i) {
-            outputArray[i] = rawData.charCodeAt(i);
-        }
-        return outputArray;
-    }
-
-    const addTriggerMessageActions = function (id) {
-        let lineMessageId = generateElementId('message', id),
-            messageId = generateElementId('message__container', id),
-            actionBoxId = generateElementId('message__action', id),
-            buttonReactionId = generateElementId('message__reactionbutton', id),
-            reactionIconList = generateElementId('message__reactionlist', id),
-            moreId = generateElementId('message__morebutton', id),
-            moreDropdownListId = generateElementId('message__dropdownlist', id),
-            moreButtonElement = $(`#${moreDropdownListId}`),
-            lineMessageElement = $(`#${lineMessageId}`),
-            actionBoxElement = $(`#${actionBoxId}`),
-            messageContentElement = $(`#${messageId} .message__content`),
-            reactionIconListElement = $(`#${reactionIconList}`)
-
-        $(`#${moreId}`).on("click", function () {
-            if (moreButtonElement.css('display') == 'none') {
-                isShowMoreDropdownList = true
-                moreButtonElement.show()
-                actionBoxElement.css('display', 'flex')
-                lineMessageElement.css('background-color', '#F2F3F5')
-            } else {
-                isShowMoreDropdownList = false
-                moreButtonElement.hide()
-                actionBoxElement.hide()
-                lineMessageElement.css('background-color', '')
-            }
-        })
-
-        $(`#${moreDropdownListId} .delete`).on("click", function () {
-            deleteMessage(lineMessageId)
-            isShowMoreDropdownList = false
-        })
-
-        $(`#${moreDropdownListId} .edit`).on("click", function () {
-            moreButtonElement.hide()
-            lineMessageElement.css('background-color', '#FFF6D6')
-            $("#message").val(messageContentElement.text()).css('background-color', '#FFF6D6')
-            editMessageId = getMessageIdFromElementId('message__container-', messageId)
-        })
-
-        $(`#${lineMessageId}`).hover(function () {
-            if (!isShowMoreDropdownList && !isShowReactionList) {
-                $(this).css('background-color', '#F2F3F5')
-                $(this).find('.message__action').css('display', 'flex')
-            }
-        }, function () {
-            if (!isShowMoreDropdownList && !isShowReactionList) {
-                $(this).css('background-color', '')
-                $(this).find('.message__action').css('display', 'none')
-            }
-        })
-
-        $(`#${buttonReactionId}`).on("click", function () {
-            const newOpacity = isShowReactionList ? 0 : 1;
-
-            reactionIconListElement.css("opacity", newOpacity);
-            isShowReactionList = !isShowReactionList;
-        })
-
-        $(`#${reactionIconList} div.icon`).on("click", function () {
-            let messageId = getMessageIdFromElementId('message__reactionlist-', reactionIconList)
-            reactMessage(messageId, $(this).attr("data-title").toLowerCase())
-        })
-    }
-
     const uploadFile = function (files) {
         let originalFileNames = []
 
@@ -178,15 +61,6 @@ $(function () {
         });
     }
 
-    const hideAllCallingNotification = () => {
-        let ringtone = $('#ringtone')
-
-        ringtone[0].pause()
-        $('.chat__callnotification').hide()
-        $('#calling-notification').hide()
-        $('#incomming-call-notification').hide()
-    }
-
     socket.on("newMessage", function ({ messageData, from, to }) {
         const id = messageData.id,
             isEdit = messageData.isEdit,
@@ -194,7 +68,7 @@ $(function () {
             username = messageData.username,
             createdAt = messageData.createdAt
 
-        let messageId = generateElementId('message__container', id),
+        let messageId = h.generateElementId('message__container', id),
             messageTemplateElm = $('#message-template'),
             messagesElm = $('#messages')
 
@@ -214,16 +88,16 @@ $(function () {
         }
 
         if (!isEdit) {
-            addTriggerMessageActions(id)
+            h.addTriggerMessageActions(id)
         }
 
-        scrollToBottom(true)
+        h.scrollToBottom(true)
     })
 
     socket.on('updateReactions', (data) => {
         const { messageId, reactions } = data;
-        let reactionsId = generateElementId('message__reactions', messageId),
-            reactionIconList = generateElementId('message__reactionlist', messageId),
+        let reactionsId = h.generateElementId('message__reactions', messageId),
+            reactionIconList = h.generateElementId('message__reactionlist', messageId),
             reactionsElement = $(`#${reactionsId}`),
             reactionIconListElement = $(`#${reactionIconList}`)
 
@@ -243,7 +117,7 @@ $(function () {
     });
 
     socket.on('users', (users) => {
-        this.users = users.sort((a, b) => {
+        users.sort((a, b) => {
             if (currentUserId && a.id === currentUserId) return -1;
             if (currentUserId && b.id === currentUserId) return 1;
             if (a.username < b.username) return -1;
@@ -319,10 +193,10 @@ $(function () {
                         messagesElm.append(messagesHtml)
 
                         listMessageIds.forEach((id) => {
-                            addTriggerMessageActions(id)
+                            h.addTriggerMessageActions(id)
                         })
 
-                        scrollToBottom()
+                        h.scrollToBottom()
                     }
                 },
                 error: function (xhr, status, error) {
@@ -351,7 +225,7 @@ $(function () {
 
                     return registration.pushManager.subscribe({
                         userVisibleOnly: true,
-                        applicationServerKey: urlBase64ToUint8Array(publicKey),
+                        applicationServerKey: h.urlBase64ToUint8Array(publicKey),
                     });
                 }).then((subscription) => {
                     socket.emit('subscribe', subscription);
@@ -392,7 +266,7 @@ $(function () {
 
         messagesElm.append(uploadFileElement)
 
-        scrollToBottom(false, loadedImg.length)
+        h.scrollToBottom(false, loadedImg.length)
     });
 
     socket.on('incommingCall', (from) => {
@@ -412,17 +286,17 @@ $(function () {
         const callerName = $('#caller-name');
 
         callerName.text(null)
-        hideAllCallingNotification()
+        h.hideAllCallingNotification()
 
         callingFrom = ''
     })
 
     socket.on('callRejected', () => {
-        hideAllCallingNotification()
+        h.hideAllCallingNotification()
     })
 
     socket.on('callAnswered', (to) => {
-        hideAllCallingNotification()
+        h.hideAllCallingNotification()
 
         let redirectUrl = `/video?toUserId=${to}&fromUserId=${currentUserId}`
         window.location.replace(redirectUrl)
@@ -445,7 +319,7 @@ $(function () {
     })
 
     $(document).on("click", "#cancel-call", () => {
-        hideAllCallingNotification()
+        h.hideAllCallingNotification()
         socket.emit('cancelCalling', {
             from: currentUserId,
             to: selectedUserId
@@ -453,12 +327,12 @@ $(function () {
     })
     
     $(document).on("click", "#reject-call", () => {
-        hideAllCallingNotification()
+        h.hideAllCallingNotification()
         socket.emit('rejectIncommingCalling', callingFrom)
     })
 
     $(document).on("click", "#answer-call", () => {
-        hideAllCallingNotification()
+        h.hideAllCallingNotification()
 
         socket.emit('answerIncommingCalling', {from: callingFrom, to: currentUserId})  
 
