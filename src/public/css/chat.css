@@ -136,31 +136,6 @@ button:disabled {
     background: #7c5cbf94;
 }
 
-.centered-form {
-    background: #333744;
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.centered-form__box {
-    box-shadow: 0px 0px 17px 1px #1D1F26;
-    background: #F7F7FA;
-    padding: 24px;
-    width: 250px;
-}
-
-.centered-form button {
-    width: 100%;
-}
-
-.centered-form input {
-    margin-bottom: 16px;
-    width: 100%;
-}
-
 .chat {
     display: flex;
     flex-wrap: wrap;
@@ -171,6 +146,8 @@ button:disabled {
     flex: 100%;
 }
 
+
+/* Chat sidebar*/
 .chat__sidebar {
     height: 95vh;
     color: white;
@@ -179,6 +156,29 @@ button:disabled {
     overflow-y: scroll
 }
 
+.users {
+    list-style-type: none;
+    font-weight: 300;
+    padding: 12px 24px 0 24px;
+}
+.online {
+    color: green;
+}
+.fas.fa-circle {
+    font-size: 10px;
+}
+.user {
+    margin: 5px 10px;
+    cursor: pointer;
+    padding: 10px;
+}
+.user:hover {
+  background-color: lightgray;
+  border-radius: 5px;
+}
+
+
+/* message content*/
 .chat__main {
     display: flex;
     flex-direction: column;
@@ -195,12 +195,6 @@ button:disabled {
 
 .message {
     margin-bottom: 16px;
-}
-
-.message__name {
-    font-weight: 600;
-    font-size: 14px;
-    margin-right: 8px;
 }
 
 .message__meta {
@@ -235,41 +229,6 @@ button:disabled {
 
 .compose button {
     font-size: 14px;
-}
-
-.room-title {
-    font-weight: 400;
-    font-size: 22px;
-    background: #2c2f3a;
-    padding: 24px;
-}
-
-.list-title {
-    font-weight: 500;
-    font-size: 18px;
-    margin-bottom: 4px;
-    padding: 12px 24px 0 24px;
-}
-
-.users {
-    list-style-type: none;
-    font-weight: 300;
-    padding: 12px 24px 0 24px;
-}
-.online {
-    color: green;
-}
-.fas.fa-circle {
-    font-size: 10px;
-}
-.user {
-    margin: 5px 10px;
-    cursor: pointer;
-    padding: 10px;
-}
-.user:hover {
-  background-color: lightgray;
-  border-radius: 5px;
 }
 
 .message__imgfile {
@@ -334,7 +293,10 @@ button:disabled {
     white-space: nowrap;
 }
 
+
+/* video call, audio call nav menu */
 .chat-nav {
+    display: none;
     position: sticky;
     top: 0;
     z-index: 100;
@@ -363,15 +325,8 @@ button:disabled {
     background-color: #ddd;
 }
 
-@keyframes ring {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.2);
-    }
-}
 
+/* Call notification */
 #incomming-call-notification {
     animation: ring 2s infinite;
     display: none;

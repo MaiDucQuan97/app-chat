@@ -154,6 +154,8 @@ $(window).on( 'load', () => {
                     recipientUsername: selectedUsername
                 },
                 success: function (response) {
+                    $('.chat-nav').toggle(selectedUserId !== currentUserId)
+
                     if (response.length !== 0) {
                         response.forEach((message) => {
                             if (message.type == 'file') {
