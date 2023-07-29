@@ -4,15 +4,16 @@
 <head>
     <title>Chat realtime NodeJS demo</title>
 
-    <link rel="stylesheet" href="/css/chat.css">
-    <link rel="stylesheet" href="/css/reaction-icon.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/3.0.1/mustache.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qs/6.6.0/qs.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="/js/jquery.min.js"></script>
-    <script src="/js/chat.js"></script>
+    <script type="module" src="/js/chat.js"></script>
     <script src="/js/service-worker.js"></script>
+
+    <link rel="stylesheet" href="/css/chat.css">
+    <link rel="stylesheet" href="/css/reaction-icon.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.5.0/semantic.min.css"
         integrity="sha512-KXol4x3sVoO+8ZsWPFI/r5KBVB/ssCGB5tsv2nVOKwLg33wTFP3fmnXa47FdSVIshVTgsYk/1734xSk9aFIa4A=="
@@ -34,8 +35,39 @@
         <div class="chat__sidebar">
             <ul id="user-list"></ul>
         </div>
+        <div class="chat__homepage">
+        </div>
         <div class="chat__main">
+            <div class="chat-nav">
+                <ul>
+                  <li><button id="audio-call"><i class="phone icon"></i></button></li>
+                  <li><button id="video-call"><i class="video icon"></i></button></li>
+                </ul>
+            </div>
             <div id="messages" class="chat__messages"></div>
+            <div class="chat__callnotification">
+                <div id="incomming-call-notification">
+                    <div class="notification__header">
+                        <span id="caller-name"></span> is calling...
+                    </div>
+                    <div class="notification__content">
+                        <button id="answer-call"><i class="phone icon answer-call"></i></button>
+                        <button id="reject-call"><i class="phone icon reject-call"></i></button>
+                    </div>
+                </div>
+                <div id="calling-notification">
+                    <div class="notification__header">
+                        Calling <span id="receiver-name"></span>
+                    </div>
+                    <div class="notification__content">
+                        <button id="cancel-call"><i class="phone icon cancel-call"></i></button>
+                    </div>
+                </div>
+            </div>
+        
+            <audio id="ringtone" preload="auto">
+                <source src="/media/iphone.mp3" type="audio/mpeg">
+            </audio>
 
             <div class="compose">
                 <form id="message-form">

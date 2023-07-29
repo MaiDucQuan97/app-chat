@@ -180,9 +180,9 @@ button:disabled {
 }
 
 .chat__main {
-    flex-grow: 1;
     display: flex;
     flex-direction: column;
+    position: relative;
     max-height: 95vh;
     flex: 85%;
 }
@@ -332,4 +332,91 @@ button:disabled {
     padding-inline: 1rem;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.chat-nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+.chat-nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.chat-nav li {
+    float: right;
+}
+
+.chat-nav li a {
+    display: block;
+    color: #333;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+.chat-nav li a:hover {
+    background-color: #ddd;
+}
+
+@keyframes ring {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+}
+
+#incomming-call-notification {
+    animation: ring 2s infinite;
+    display: none;
+}
+
+#calling-notification {
+    display: none;
+}
+
+@keyframes ring {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+}
+
+.notification__content .answer-call {
+    color: green;
+    font-size: 1.5em;
+}
+
+.notification__content .reject-call {
+    color: red;
+    font-size: 1.5em;
+}
+
+.chat__callnotification {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    border-radius: 5px;
+    color: #fff;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.notification__content .cancel-call {
+    color: red;
+    font-size: 1.5em;
 }

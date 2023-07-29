@@ -1,0 +1,2 @@
+- Create CI/CD
+- Create STUN/TUN server in https://dashboard.metered.ca/ 
