@@ -13,7 +13,8 @@ $(window).on( 'load', () => {
         selectedUserId = '',
         selectedUsername = '',
         currentUserId = '',
-        callingFrom = ''
+        callingFrom = '',
+        callingType = ''
 
     const socket = io();
     if (Notification.permission !== 'granted') {
@@ -271,7 +272,7 @@ $(window).on( 'load', () => {
         h.scrollToBottom(false, loadedImg.length)
     });
 
-    socket.on('incommingCall', (from) => {
+    socket.on('incommingCall', ({ from, type}) => {
         const ringtone = $('#ringtone'),
               callerName = $('#caller-name');
 
@@ -282,6 +283,7 @@ $(window).on( 'load', () => {
         ringtone[0].play();
 
         callingFrom = from
+        callingType = type
     })
 
     socket.on('cancelIncommingCall', () => {
@@ -300,7 +302,7 @@ $(window).on( 'load', () => {
     socket.on('callAnswered', (to) => {
         h.hideAllCallingNotification()
 
-        let redirectUrl = `/video?toUserId=${to}&fromUserId=${currentUserId}`
+        let redirectUrl = `/video?toUserId=${to}&fromUserId=${currentUserId}&callingType=${callingType}`
         window.location.replace(redirectUrl)
     })
 
@@ -310,11 +312,16 @@ $(window).on( 'load', () => {
         }
     })
 
-    $(document).on("click", "#video-call", () => {
+    $(document).on("click", ".call", (event) => {
+        const clickedElementId = event.currentTarget.id;
+
         socket.emit('calling', {
             from: currentUserId,
-            to: selectedUserId
+            to: selectedUserId,
+            type: clickedElementId
         })
+
+        callingType = clickedElementId
         $('.chat__callnotification').css('display', 'flex')
         $('#incomming-call-notification').hide()
         $('#calling-notification').show()
@@ -339,7 +346,7 @@ $(window).on( 'load', () => {
         socket.emit('answerIncommingCalling', {from: callingFrom, to: currentUserId})  
 
         setTimeout(() => {
-            let redirectUrl = `/video?toUserId=${callingFrom}&fromUserId=${currentUserId}`
+            let redirectUrl = `/video?toUserId=${callingFrom}&fromUserId=${currentUserId}&callingType=${callingType}`
             window.location.replace(redirectUrl)
         }, 2000)
     })

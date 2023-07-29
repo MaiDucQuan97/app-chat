@@ -1,7 +1,9 @@
 let isShowMoreDropdownList = false,
     isShowReactionList = false;
+var pc = [];
 
 export default {
+    pc,
     createUniqueString(str1, str2) {
         const sortedStrings = [str1, str2].sort();
       
@@ -192,11 +194,17 @@ export default {
         }
     },
 
-    setLocalStream( stream, mirrorMode = true ) {
-        const localVidElem = $( '#local' );
-
+    setLocalStream( stream, mirrorMode = true , triggerByClick = false) {
+        const localVidElem = $( '#local' ),
+            allUrlParams = this.getAllUrlParams(),
+            callingType = allUrlParams['callingType'] ?? ''
+            
         localVidElem[0].srcObject = stream;
         mirrorMode ? localVidElem.addClass( 'mirror-mode' ) : localVidElem.removeClass( 'mirror-mode' );
+
+        if (!triggerByClick) {
+            this.toggleShowVideo(callingType, stream)
+        }
     },
 
     adjustVideoElemSize() {
@@ -390,5 +398,45 @@ export default {
             let messageId = self.getMessageIdFromElementId('message__reactionlist-', reactionIconList)
             self.reactMessage(messageId, $(this).attr("data-title").toLowerCase())
         })
+    },
+
+    toggleShowVideo(type, stream) {
+        if (type === 'audio-call') {
+            let elem = $('#toggle-video')
+
+            elem.removeClass( 'fa-video' )
+            elem.addClass( 'fa-video-slash' )
+            elem.attr( 'title', 'Show Video' )
+
+            stream.getVideoTracks()[0].enabled = false
+
+            this.setLocalStream( stream, true , true);
+        }
+    },
+
+    getAllUrlParams() {
+        let url = new URL(window.location.href),
+            params = url.searchParams,
+            result = []
+
+        params.forEach((value, key) => {
+            result[key] = value
+        })
+
+        return result;
+    },
+
+    broadcastNewTracks( stream, type, mirrorMode = true ) {
+        this.setLocalStream( stream, mirrorMode , true);
+
+        let track = type == 'audio' ? stream.getAudioTracks()[0] : stream.getVideoTracks()[0];
+
+        for ( let p in pc ) {
+            let pName = pc[p];
+
+            if ( typeof pc[pName] == 'object' ) {
+                this.replaceTrack( track, pc[pName] );
+            }
+        }
     }
 };

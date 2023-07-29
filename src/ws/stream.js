@@ -108,8 +108,8 @@ const stream = (socket, io) => {
         socket.emit('uploadResponse', messageData );
     });
 
-    socket.on('calling', ({from, to}) => {
-        io.to( to ).emit( 'incommingCall', from);
+    socket.on('calling', ({from, to, type}) => {
+        io.to( to ).emit( 'incommingCall', {from, type});
         setTimeout(() => {
             io.to( to ).emit( 'cancelIncommingCall');
             io.to( from ).emit( 'cancelIncommingCall');
