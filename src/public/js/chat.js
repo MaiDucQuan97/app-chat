@@ -200,6 +200,8 @@ $(window).on( 'load', () => {
                         })
 
                         h.scrollToBottom()
+
+                        h.addScrollToBottomButton()
                     }
                 },
                 error: function (xhr, status, error) {

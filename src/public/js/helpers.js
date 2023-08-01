@@ -1,5 +1,9 @@
+const   messagesElm = $('#messages'),
+        scrollToBottomButton = $('.scroll-to-bottom-button');
+
 let isShowMoreDropdownList = false,
     isShowReactionList = false;
+
 var pc = [];
 
 export default {
@@ -267,26 +271,27 @@ export default {
     },
 
     scrollToBottom(isSendTextMessage = false, loadedImg = 0) {
-        let messageElm = $('#messages'),
-            images = messageElm.find("img")
+        let images = messagesElm.find("img")
         
         images.on("load", function() {
             loadedImg++
             if (loadedImg == images.length) {
-                $('#messages')[0].scrollTop = $('#messages')[0].scrollHeight
+                messagesElm.animate({ scrollTop: messagesElm[0].scrollHeight }, 1500, 'swing')
             }
         })
 
         images.on("error", function() {
             loadedImg++
             if (loadedImg == images.length) {
-                $('#messages')[0].scrollTop = $('#messages')[0].scrollHeight
+                messagesElm.animate({ scrollTop: messagesElm[0].scrollHeight }, 1500, 'swing')
             }
         })
 
         if (images.length === 0 || isSendTextMessage) {
-            $('#messages')[0].scrollTop = $('#messages')[0].scrollHeight
+            messagesElm.animate({ scrollTop: messagesElm[0].scrollHeight }, 1500, 'swing')
         }
+
+        this.updateButtonVisibility()
     },
 
     reactMessage(messageId, reaction) {
@@ -438,5 +443,27 @@ export default {
                 this.replaceTrack( track, pc[pName] );
             }
         }
+    },
+
+    addScrollToBottomButton() {
+        let self = this
+
+        scrollToBottomButton.on("click", () => {
+            self.scrollToBottom(true)
+        })
+
+        messagesElm.scroll(() => {
+            self.updateButtonVisibility()
+        })
+    
+        self.updateButtonVisibility()
+    },
+
+    isScrolledToBottom() {
+        return messagesElm[0].scrollHeight - messagesElm[0].scrollTop <= 2*messagesElm[0].clientHeight + 10;
+    },
+
+    updateButtonVisibility() {
+        scrollToBottomButton.toggle(!this.isScrolledToBottom())
     }
 };
