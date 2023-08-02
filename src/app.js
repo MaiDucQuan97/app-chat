@@ -38,6 +38,8 @@ io.use((socket, next) => {
     socket.username = username
     socket.sessionID = sessionID
     socket.userID = userID
+    socket.allUsers = session.allUsers
+    
     next();
 });
 

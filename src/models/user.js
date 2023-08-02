@@ -75,6 +75,16 @@ userSchema.statics.findByCredentials = async (username, password) => {
     return user
 }
 
+userSchema.statics.getAllUsers = async () => {
+    const users = await User.find()
+    
+    if (!users) {
+        throw new Error('No user exists!')
+    }
+
+    return users
+}
+
 userSchema.pre('save', async function (next) {
     const user = this
 

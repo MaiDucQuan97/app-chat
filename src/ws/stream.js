@@ -1,22 +1,20 @@
 const fs  = require('fs')
 const path = require('path')
+const User = require('../models/user')
 
 const { generateMessage, generateMessageId , storeMessage } = require('../utils/messages')
 const { generateUniqueFileName, storeUploadFileMessage, getFileType } = require('../utils/uploadFiles')
 const { sendMessageNotificationToClient, vapidKeys } = require('../utils/subscribe')
 
 const connectedUsers = new Map()
+
 const messageReactions = {};
 let subscriptions = []
 
 const stream = (socket, io) => {
     socket.join(socket.userID)
 
-    connectedUsers.set(socket.userID, {
-        id: socket.userID,
-        username: socket.username,
-        online: true
-    });
+    retrieveStatusOfAllUsers(socket)
 
     emitCurrentUserId(socket.userID, io)
     emitGenerateNewSubscription(socket.userID, vapidKeys.publicKey, io)
@@ -150,7 +148,11 @@ const stream = (socket, io) => {
     } );
 
     socket.on("disconnect", () => {
-        connectedUsers.delete(socket.userID);
+        connectedUsers.set(socket.userID, {
+            id: socket.userID,
+            username: socket.username,
+            online: false
+        });
         emitUserList(io);
     });
 }
@@ -167,6 +169,29 @@ const emitCurrentUserId = (userID, io) => {
 
 const emitGenerateNewSubscription = (userID, publicKey, io) => {
     io.to(userID).emit('generateNewSubscription', publicKey)
+}
+
+const retrieveStatusOfAllUsers = (socket) => {
+    let allUsers = socket.allUsers
+
+    Object.keys(allUsers).forEach((key) => {
+        let user = allUsers[key],
+            userID = user._id.toString()
+
+        if (!connectedUsers.has(userID)) {
+            connectedUsers.set(userID, {
+                id: userID,
+                username: user.username,
+                online: false
+            })
+        }
+    })
+
+    connectedUsers.set(socket.userID, {
+        id: socket.userID,
+        username: socket.username,
+        online: true
+    });
 }
 
 module.exports = {

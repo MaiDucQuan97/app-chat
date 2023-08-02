@@ -37,11 +37,13 @@ router.get('/user/me', auth, async (req, res) => {
 router.post('/user/login', async (req, res) => {
     try {
         const user = await User.findByCredentials(req.body.username, req.body.password)
+        const allUsers = await User.getAllUsers()
 
         // const token = await user.generateAuthToken()
 
         req.session.isLoggedIn = true;
         req.session.user = user;
+        req.session.allUsers = allUsers
 
         res.send({ user, isLoggedIn: true })
     } catch (e) {
