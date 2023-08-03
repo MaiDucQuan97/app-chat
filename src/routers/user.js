@@ -2,12 +2,32 @@ const express = require('express')
 const User = require('../models/user')
 const Message = require('../models/message')
 const auth = require('../middleware/auth')
+const bcrypt = require('bcryptjs')
 const router = express.Router()
 
 router.post('/user/create', async (req, res) => {
     try {
         const user = await User(req.body)
         // await user.generateAuthToken()
+
+        await user.save()
+        res.send(user)
+    } catch (error) {
+        res.status(400).send(error)
+    }
+})
+
+router.post('/user/update', async (req, res) => {
+    try {
+        const user = await User.findOne({username: req.body.username})
+
+        const isMatch = await bcrypt.compare(req.body.currentPassword, user.password)
+
+        if (!isMatch) {
+            throw new Error('Current password is not correct!')
+        }
+
+        user.password = req.body.newPassword
 
         await user.save()
         res.send(user)

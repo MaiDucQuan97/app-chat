@@ -14,7 +14,8 @@ $(window).on( 'load', () => {
         selectedUsername = '',
         currentUserId = '',
         callingFrom = '',
-        callingType = ''
+        callingType = '',
+        currentUser = {}
 
     const socket = io();
     if (Notification.permission !== 'granted') {
@@ -136,6 +137,10 @@ $(window).on( 'load', () => {
 
         userListElm.empty()
         userListElm.append(html)
+
+        currentUser = userList[currentUserId]
+        $('.info__image img').attr('alt', currentUser.username)
+        $('.info__username span').text(currentUser.username)
 
         $('#user-list .user').on('click', function (e) {
             let messageTemplateElm = $('#message-template'),
@@ -353,6 +358,37 @@ $(window).on( 'load', () => {
         }, 2000)
     })
 
+    $(document).on("click", ".info_settings button", () => {
+        let settingsTemplateElm = $('#settings-template'),
+            chatElm = $('#chat'),
+            settingElm = $('#settings')
+
+        if (settingElm.length === 0) {
+            const html = Mustache.render(settingsTemplateElm.html())
+
+            chatElm.append(html)
+        } else {
+            settingElm.remove()
+        }
+    })
+
+    $(document).on("click", "#user-info button", () => {
+        let userSettingsPopupTemplate = $('#user-settings-popup-template'),
+            chatElm = $('#chat')
+
+        const html = Mustache.render(userSettingsPopupTemplate.html(), {
+            username: currentUser.username,
+            email: currentUser.email
+        })
+
+        chatElm.append(html)
+        $('#settings').remove()
+    })
+
+    $(document).on("click", "#closePopupBtn", () => {
+        $('#user-settings-popup').remove()
+    })
+
     $("#sendMessage").on("click", function (e) {
         e.preventDefault()
         sendMessage()
@@ -363,7 +399,8 @@ $(window).on( 'load', () => {
         }
     })
 
-    $('#logout-btn').on("click", function () {
+    $(document).on("click", '#logout-btn', function () {
+        $('#settings').remove()
         $.ajax({
             type: 'POST',
             url: '/user/logout',
@@ -382,5 +419,52 @@ $(window).on( 'load', () => {
 
     $('#fileInput').on("input", function () {
         uploadFile(this.files);
+    })
+
+    $(document).on('click', function(event) {
+        let settingElm = $('#settings'),
+            infoSettingsElm = $('.info_settings button')
+
+        if (
+            !settingElm.is(event.target) && !settingElm.has(event.target).length &&
+            !infoSettingsElm.is(event.target) && !infoSettingsElm.has(event.target).length
+        ) {
+            settingElm.remove()
+        }
+    })
+
+    $(document).on("submit", "#user-settings-form", (event) => {
+        event.preventDefault();
+
+        let username = $('#username').val(),
+            currentPassword = $('#currentPassword').val(),
+            newPassword = $('#newPassword').val(),
+            confirmPassword = $('#confirmPassword').val()
+
+        if (newPassword !== confirmPassword) {
+            alert('New password and confirm password do not match.');
+            return;
+        }
+
+        $.ajax({
+            type: 'POST',
+            url: '/user/update',
+            data: JSON.stringify({
+                username,
+                currentPassword,
+                newPassword,
+                confirmPassword
+            }),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (response) {
+                $('#user-settings-popup').remove()
+                alert('Change user settings successfully!')
+            },
+            error: function (xhr, status, error) {
+                console.log(xhr.responseText)
+                alert('Change user settings fail. Please try again.')
+            }
+        });
     })
 })

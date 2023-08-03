@@ -190,6 +190,7 @@ const retrieveStatusOfAllUsers = (socket) => {
     connectedUsers.set(socket.userID, {
         id: socket.userID,
         username: socket.username,
+        email: socket.email,
         online: true
     });
 }

@@ -11,5 +11,5 @@
 + ~~Feature button scroll to bottom~~
 + Feature message unread: different style in chat__main + count unread message in chat_sidebar
 + ~~Feature show send message to disconnected people~~
-+ Feature manager personal information
++ ~~Feature manager personal information~~
 + Feature upload avatar

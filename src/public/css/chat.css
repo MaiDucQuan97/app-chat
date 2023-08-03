@@ -50,20 +50,6 @@
     background-color: #f2f3f5;
 }
 
-#logout-btn {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-}
-
-#logout-btn button {
-    padding: 8px 16px;
-    background-color: #f44336;
-    color: #fff;
-    border: none;
-    cursor: pointer;
-}
-
 .menu {
     display: flex;
     background-color: #f1f1f1;
@@ -141,15 +127,10 @@ button:disabled {
     flex-wrap: wrap;
 }
 
-.chat__navbar {
-    height: 40px;
-    flex: 100%;
-}
-
 
 /* Chat sidebar*/
 .chat__sidebar {
-    height: 95vh;
+    height: 100vh;
     color: white;
     background: #333744;
     flex: 15%;
@@ -177,13 +158,119 @@ button:disabled {
   border-radius: 5px;
 }
 
+.user__informations {
+    display: flex;
+    justify-content: space-between;
+}
+
+.info__username {
+    align-self: center;
+}
+
+.infor__username span {
+    text-align: center;
+    font-size: 16px;
+    color: white;
+}
+  
+.info__image img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin: 10px;
+}
+
+.remove-css-button {
+    background: transparent;
+}
+
+.remove-css-button:hover {
+    background: transparent;
+}
+
+.settings {
+    display: flex;
+    position: fixed;
+    top: 35px;
+    left: 200px;
+    flex-direction: column;
+    background: #000;
+    width: 25vh;
+    align-content: flex-end;
+    flex-wrap: wrap;
+}
+
+#logout-btn button{
+    color: red;
+}
+
+
+/* Popup user settings */
+.popup {
+    display: block;
+    z-index: 9999;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.popup-content {
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 100vh;
+    min-height: 70vh;
+}
+
+.popup-content h2 {
+    align-self: center;
+}
+
+#saveChangesBtn { 
+    width: 50%;
+    align-self: center;
+    margin: 10px;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+
+/* Style for the readonly input */
+input[readonly] {
+    background-color: #f5f5f5;
+    border: 1px solid #ccc;
+    color: #555;
+}
+
 
 /* message content*/
 .chat__main {
     display: flex;
     flex-direction: column;
     position: relative;
-    max-height: 95vh;
+    max-height: 100vh;
     flex: 85%;
 }
 

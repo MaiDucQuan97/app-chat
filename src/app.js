@@ -33,9 +33,11 @@ io.use((socket, next) => {
     let user = session.user,
         username = user.username,
         userID = user._id,
+        userEmail = user.email
         sessionID = session.sessionID
 
     socket.username = username
+    socket.email = userEmail
     socket.sessionID = sessionID
     socket.userID = userID
     socket.allUsers = session.allUsers
