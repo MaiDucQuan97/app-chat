@@ -140,6 +140,7 @@ $(window).on( 'load', () => {
 
         currentUser = userList[currentUserId]
         $('.info__image img').attr('alt', currentUser.username)
+        $('.info__image img').attr('src', currentUser.avatar)
         $('.info__username span').text(currentUser.username)
 
         $('#user-list .user').on('click', function (e) {
@@ -378,7 +379,8 @@ $(window).on( 'load', () => {
 
         const html = Mustache.render(userSettingsPopupTemplate.html(), {
             username: currentUser.username,
-            email: currentUser.email
+            email: currentUser.email,
+            avatar: currentUser.avatar
         })
 
         chatElm.append(html)
@@ -401,16 +403,22 @@ $(window).on( 'load', () => {
 
     $(document).on("click", '#logout-btn', function () {
         $('#settings').remove()
-        $.ajax({
-            type: 'POST',
-            url: '/user/logout',
-            success: function (response) {
-                window.location.href = '/login'
-            },
-            error: function (xhr, status, error) {
-                alert('Logout failed. Please try again.');
-            }
-        });
+        h.logout()
+    })
+
+    $(document).on("change", "#changePasswordCheckbox", () => {
+        let passwordFields = $("#passwordFields"),
+            currentPasswordInput = $("#currentPassword"),
+            newPasswordInput = $("#newPassword"),
+            confirmPasswordInput = $("#confirmPassword");
+
+        passwordFields.toggle();
+
+        if (!passwordFields.is(":visible")) {
+            currentPasswordInput.val("");
+            newPasswordInput.val("");
+            confirmPasswordInput.val("");
+        }
     })
 
     $('#openInputFileButton').on("click", function () {
@@ -433,33 +441,63 @@ $(window).on( 'load', () => {
         }
     })
 
+    $(document).on("click", "#uploadAvatarBtn", (e) => {
+        e.preventDefault()
+        $('#avatar').click()
+    })
+
+    $(document).on("change", "#avatar", (event) => {
+        const file = event.target.files[0];
+
+        if (file) {
+            const reader = new FileReader();
+
+            reader.onload = function() {
+                $("#avatarImage").attr("src", reader.result);
+            };
+
+            reader.readAsDataURL(file);
+        }
+    })
+
     $(document).on("submit", "#user-settings-form", (event) => {
         event.preventDefault();
 
         let username = $('#username').val(),
-            currentPassword = $('#currentPassword').val(),
-            newPassword = $('#newPassword').val(),
-            confirmPassword = $('#confirmPassword').val()
+            changePasswordCheckbox = $('#changePasswordCheckbox').is(':checked'),
+            newAvatarFile = $("#avatar")[0].files[0]
 
-        if (newPassword !== confirmPassword) {
-            alert('New password and confirm password do not match.');
-            return;
+        const formData = new FormData();
+        formData.append("username", username);
+        formData.append("avatar", newAvatarFile);
+        formData.append("changePasswordCheckbox", changePasswordCheckbox);
+
+
+        if (changePasswordCheckbox) {
+            let currentPassword = $('#currentPassword').val(),
+                newPassword = $('#newPassword').val(),
+                confirmPassword = $('#confirmPassword').val()
+
+            formData.append("currentPassword", currentPassword);
+            formData.append("newPassword", newPassword);
+            formData.append("confirmPassword", confirmPassword);
+
+            if (newPassword !== confirmPassword) {
+                alert('New password and confirm password do not match.');
+                return;
+            }
         }
 
         $.ajax({
             type: 'POST',
             url: '/user/update',
-            data: JSON.stringify({
-                username,
-                currentPassword,
-                newPassword,
-                confirmPassword
-            }),
-            contentType: "application/json; charset=utf-8",
-            dataType: "json",
+            data: formData,
+            processData: false,
+            contentType: false,
             success: function (response) {
                 $('#user-settings-popup').remove()
                 alert('Change user settings successfully!')
+                h.logout()
             },
             error: function (xhr, status, error) {
                 console.log(xhr.responseText)

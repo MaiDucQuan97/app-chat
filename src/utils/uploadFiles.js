@@ -58,8 +58,19 @@ const getFileType = (filePath) => {
     }
 }
 
+const convertBufferToImage = (avatar) => {
+    if (!avatar) {
+        return avatar
+    }
+    const b64 = Buffer.from(avatar, 'base64').toString('base64'),
+          mimeType = 'image/png'
+    
+    return `data:${mimeType};base64,${b64}`
+}
+
 module.exports = {
     generateUniqueFileName,
     storeUploadFileMessage,
-    getFileType
+    getFileType,
+    convertBufferToImage
 }

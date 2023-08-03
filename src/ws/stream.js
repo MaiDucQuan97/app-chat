@@ -191,6 +191,7 @@ const retrieveStatusOfAllUsers = (socket) => {
         id: socket.userID,
         username: socket.username,
         email: socket.email,
+        avatar: socket.avatar,
         online: true
     });
 }

@@ -4,6 +4,7 @@ const socketio = require('socket.io')
 const http = require('http')
 const { sessionMiddleware } = require('./utils/session')
 let { stream } = require( './ws/stream' );
+let { convertBufferToImage } = require('./utils/uploadFiles')
 
 const app = express();
 const server = http.createServer(app)
@@ -32,12 +33,14 @@ io.use((socket, next) => {
 
     let user = session.user,
         username = user.username,
+        avatar = convertBufferToImage(user.avatar),
         userID = user._id,
         userEmail = user.email
         sessionID = session.sessionID
 
     socket.username = username
     socket.email = userEmail
+    socket.avatar = avatar
     socket.sessionID = sessionID
     socket.userID = userID
     socket.allUsers = session.allUsers

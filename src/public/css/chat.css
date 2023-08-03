@@ -235,6 +235,10 @@ button:disabled {
     align-self: center;
 }
 
+.popup-content input {
+    margin-bottom: 10px;
+}
+
 #saveChangesBtn { 
     width: 50%;
     align-self: center;
@@ -254,6 +258,24 @@ button:disabled {
     color: black;
     text-decoration: none;
     cursor: pointer;
+}
+
+#passwordFields {
+    display: none;
+}
+
+#passwordFields input {
+    width: 100%;
+}
+
+#changePasswordCheckbox {
+    width: 17px;
+    height: 17px;
+}
+
+#avatarImage, #uploadAvatarBtn {
+    align-self: center;
+    margin-bottom: 10px;
 }
 
 

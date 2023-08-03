@@ -465,5 +465,18 @@ export default {
 
     updateButtonVisibility() {
         scrollToBottomButton.toggle(!this.isScrolledToBottom())
+    },
+
+    logout() {
+        $.ajax({
+            type: 'POST',
+            url: '/user/logout',
+            success: function (response) {
+                window.location.href = '/login'
+            },
+            error: function (xhr, status, error) {
+                alert('Logout failed. Please try again.');
+            }
+        });
     }
 };

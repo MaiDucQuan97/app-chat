@@ -17,19 +17,53 @@ router.post('/user/create', async (req, res) => {
     }
 })
 
-router.post('/user/update', async (req, res) => {
-    try {
-        const user = await User.findOne({username: req.body.username})
-
-        const isMatch = await bcrypt.compare(req.body.currentPassword, user.password)
-
-        if (!isMatch) {
-            throw new Error('Current password is not correct!')
+const multer = require('multer')
+const sharp = require('sharp')
+const upload = multer({
+    limits: {
+        fileSize: 1000000
+    },
+    fileFilter(req, file, cb) {
+        if (!file && !file.originalname.match(/\.(jpg|png|jpeg)$/)) {
+            cb(new Error('Please upload a image file!'))
         }
 
-        user.password = req.body.newPassword
+        cb(undefined, true)
+    }
+})
 
-        await user.save()
+router.post('/user/update', auth, upload.single('avatar'), async (req, res) => {
+    try {
+        const user = await User.findOne({username: req.body.username})
+        let isUpdated = false;
+
+        if (!user) {
+            throw new Error('Not found user!')
+        }
+
+        if (JSON.parse(req.body.changePasswordCheckbox)) {
+            const isMatch = await bcrypt.compare(req.body.currentPassword, user.password)
+
+            if (!isMatch) {
+                throw new Error('Current password is not correct!')
+            }
+
+            user.password = req.body.newPassword
+
+            isUpdated = true;
+        }
+
+        if (req.file) {
+            const buffer = await sharp(req.file.buffer).resize({ width: 250, height: 250 }).png().toBuffer()
+
+            user.avatar = buffer
+
+            isUpdated = true;
+        }
+
+        if (isUpdated) {
+            await user.save()
+        }
         res.send(user)
     } catch (error) {
         res.status(400).send(error)
@@ -59,8 +93,6 @@ router.post('/user/login', async (req, res) => {
         const user = await User.findByCredentials(req.body.username, req.body.password)
         const allUsers = await User.getAllUsers()
 
-        // const token = await user.generateAuthToken()
-
         req.session.isLoggedIn = true;
         req.session.user = user;
         req.session.allUsers = allUsers
@@ -69,32 +101,6 @@ router.post('/user/login', async (req, res) => {
     } catch (e) {
         res.status(400).send(e)
     }
-})
-
-const multer = require('multer')
-const sharp = require('sharp')
-const upload = multer({
-    limits: {
-        fileSize: 1000000
-    },
-    fileFilter(req, file, cb) {
-        if (!file.originalname.match(/\.(jpg|png|jpeg)$/)) {
-            cb(new Error('Please upload a PDF file!'))
-        }
-
-        cb(undefined, true)
-    }
-})
-
-// todo: update api to upload user avatar -> show avatar in chat page
-router.post('/user/me/avatar', auth, upload.single('avatar'), async (req, res) => {
-    const buffer = await sharp(req.file.buffer).resize({ width: 250, height: 250 }).png().toBuffer()
-
-    req.user.avatar = buffer
-    await req.user.save()
-    res.send(req.user);
-}, (error, req, res, next) => {
-    res.status(400).send({ error: error.message })
 })
 
 router.delete('/user/me/avatar', auth, async (req, res) => {
