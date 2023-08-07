@@ -5,10 +5,9 @@ $(window).on( 'load', () => {
 
     const maxReconnectAttempts = 5;
 
-    var pc = [];
     var reconnectAttempts = 0;
     var socket = io();
-    var allUrlParams = getAllUrlParams(),
+    var allUrlParams = h.getAllUrlParams(),
         toUserId = allUrlParams['toUserId'] ?? '',
         currentUserId = allUrlParams['fromUserId'] ?? '',
         myStream = '',
@@ -30,22 +29,22 @@ $(window).on( 'load', () => {
 
         socket.on( 'newUser', ( data ) => {
             socket.emit( 'newUserStart', { to: data.socketId, sender: currentUserId } );
-            pc.push( data.socketId );
+            h.pc.push( data.socketId );
             init( true, data.socketId );
         } );
 
         socket.on( 'newUserStart', ( data ) => {
-            pc.push( data.sender );
+            h.pc.push( data.sender );
             init( false, data.sender );
         } );
 
         socket.on( 'iceCandidates', async ( data ) => {
-            data.candidate ? await pc[data.sender].addIceCandidate( new RTCIceCandidate( data.candidate ) ) : '';
+            data.candidate ? await h.pc[data.sender].addIceCandidate( new RTCIceCandidate( data.candidate ) ) : '';
         } );
 
         socket.on( 'sdp', async ( data ) => {
             if ( data.description.type === 'offer' ) {
-                data.description ? await pc[data.sender].setRemoteDescription( new RTCSessionDescription( data.description ) ) : '';
+                data.description ? await h.pc[data.sender].setRemoteDescription( new RTCSessionDescription( data.description ) ) : '';
 
                 h.getUserFullMedia().then( async ( stream ) => {
                     if ( !$('#local').srcObject ) {
@@ -56,34 +55,22 @@ $(window).on( 'load', () => {
                     myStream = stream;
 
                     stream.getTracks().forEach( ( track ) => {
-                        pc[data.sender].addTrack( track, stream );
+                        h.pc[data.sender].addTrack( track, stream );
                     } );
 
-                    let answer = await pc[data.sender].createAnswer();
+                    let answer = await h.pc[data.sender].createAnswer();
 
-                    await pc[data.sender].setLocalDescription( answer );
+                    await h.pc[data.sender].setLocalDescription( answer );
 
-                    socket.emit( 'sdp', { description: pc[data.sender].localDescription, to: data.sender, sender: currentUserId } );
+                    socket.emit( 'sdp', { description: h.pc[data.sender].localDescription, to: data.sender, sender: currentUserId } );
                 } ).catch( ( e ) => {
                     console.error( e );
                 } );
             } else if ( data.description.type === 'answer' ) {
-                await pc[data.sender].setRemoteDescription( new RTCSessionDescription( data.description ) );
+                await h.pc[data.sender].setRemoteDescription( new RTCSessionDescription( data.description ) );
             }
         } );
     } );
-
-    function getAllUrlParams() {
-        let url = new URL(window.location.href),
-            params = url.searchParams,
-            result = []
-
-        params.forEach((value, key) => {
-            result[key] = value
-        })
-
-        return result;
-    }
 
     function getAndSetUserStream() {
         h.getUserFullMedia().then( ( stream ) => {
@@ -97,25 +84,25 @@ $(window).on( 'load', () => {
 
     async function init( createOffer, partnerName, isReconnect = false) {
         if (isReconnect) {
-            pc[partnerName].close()
+            h.pc[partnerName].close()
         }
 
-        pc[partnerName] = new RTCPeerConnection( h.getIceServer() );
+        h.pc[partnerName] = new RTCPeerConnection( h.getIceServer() );
 
         if ( screen && screen.getTracks().length ) {
             screen.getTracks().forEach( ( track ) => {
-                pc[partnerName].addTrack( track, screen );
+                h.pc[partnerName].addTrack( track, screen );
             } );
         } else if ( myStream ) {
             myStream.getTracks().forEach( ( track ) => {
-                pc[partnerName].addTrack( track, myStream );
+                h.pc[partnerName].addTrack( track, myStream );
             } );
         } else {
             await h.getUserFullMedia().then( ( stream ) => {
                 myStream = stream;
 
                 stream.getTracks().forEach( ( track ) => {
-                    pc[partnerName].addTrack( track, stream );
+                    h.pc[partnerName].addTrack( track, stream );
                 } );
 
                 h.setLocalStream( stream );
@@ -124,36 +111,36 @@ $(window).on( 'load', () => {
             } );
         }
 
-        h.addAllRemoteVideosExcept(pc[partnerName], toUserId)
+        h.addAllRemoteVideosExcept(h.pc[partnerName], toUserId)
 
         //create offer
         if ( createOffer ) {
-            pc[partnerName].onnegotiationneeded = async () => {
+            h.pc[partnerName].onnegotiationneeded = async () => {
                 const offerOptions = {
                     offerToReceiveAudio: true, // Preserve the order of audio m-line
                     offerToReceiveVideo: true, // Preserve the order of video m-line
                 };
 
-                let offer = await pc[partnerName].createOffer(offerOptions);
+                let offer = await h.pc[partnerName].createOffer(offerOptions);
 
-                await pc[partnerName].setLocalDescription( offer );
+                await h.pc[partnerName].setLocalDescription( offer );
 
-                socket.emit( 'sdp', { description: pc[partnerName].localDescription, to: partnerName, sender: currentUserId } );
+                socket.emit( 'sdp', { description: h.pc[partnerName].localDescription, to: partnerName, sender: currentUserId } );
             };
         }
 
         //send ice candidate to partnerNames
-        pc[partnerName].onicecandidate = ( { candidate } ) => {
+        h.pc[partnerName].onicecandidate = ( { candidate } ) => {
             socket.emit( 'iceCandidates', { candidate: candidate, to: partnerName, sender: currentUserId } );
         };
 
         //add
-        pc[partnerName].ontrack = ( e ) => {
+        h.pc[partnerName].ontrack = ( e ) => {
             h.addRemoteVideo(e.streams[0], partnerName)
         };
 
-        pc[partnerName].onconnectionstatechange = ( d ) => {
-            switch ( pc[partnerName].iceConnectionState ) {
+        h.pc[partnerName].onconnectionstatechange = ( d ) => {
+            switch ( h.pc[partnerName].iceConnectionState ) {
                 case 'disconnected':
                     h.closeVideo( partnerName );
                     break;
@@ -173,8 +160,8 @@ $(window).on( 'load', () => {
             }
         };
 
-        pc[partnerName].onsignalingstatechange = ( d ) => {
-            switch ( pc[partnerName].signalingState ) {
+        h.pc[partnerName].onsignalingstatechange = ( d ) => {
+            switch ( h.pc[partnerName].signalingState ) {
                 case 'closed':
                     console.log( "Signalling state is 'closed'" );
                     h.closeVideo( partnerName );
@@ -195,7 +182,7 @@ $(window).on( 'load', () => {
             screen = stream;
 
             //share the new stream with all partners
-            broadcastNewTracks( stream, 'video', false );
+            h.broadcastNewTracks( stream, 'video', false );
 
             //When the stop sharing button shown by the browser is clicked
             $(screen.getVideoTracks()[0]).on( 'ended', () => {
@@ -216,24 +203,10 @@ $(window).on( 'load', () => {
             res();
         } ).then( () => {
             h.toggleShareIcons( false );
-            broadcastNewTracks( myStream, 'video' );
+            h.broadcastNewTracks( myStream, 'video' );
         } ).catch( ( e ) => {
             console.error( e );
         } );
-    }
-
-    function broadcastNewTracks( stream, type, mirrorMode = true ) {
-        h.setLocalStream( stream, mirrorMode );
-
-        let track = type == 'audio' ? stream.getAudioTracks()[0] : stream.getVideoTracks()[0];
-
-        for ( let p in pc ) {
-            let pName = pc[p];
-
-            if ( typeof pc[pName] == 'object' ) {
-                h.replaceTrack( track, pc[pName] );
-            }
-        }
     }
 
     function toggleRecordingIcons( isRecording ) {
@@ -282,25 +255,23 @@ $(window).on( 'load', () => {
     $('#toggle-video').on( 'click', ( e ) => {
         e.preventDefault();
 
-        let elem = $(this)
+        let elem = $(e.currentTarget)
 
         if ( myStream.getVideoTracks()[0].enabled ) {
-            e.target.classList.remove( 'fa-video' );
-            e.target.classList.add( 'fa-video-slash' );
+            elem.removeClass( 'fa-video' );
+            elem.addClass( 'fa-video-slash' );
             elem.attr( 'title', 'Show Video' );
 
             myStream.getVideoTracks()[0].enabled = false;
-        }
-
-        else {
-            e.target.classList.remove( 'fa-video-slash' );
-            e.target.classList.add( 'fa-video' );
+        } else {
+            elem.removeClass( 'fa-video-slash' );
+            elem.addClass( 'fa-video' );
             elem.attr( 'title', 'Hide Video' );
 
             myStream.getVideoTracks()[0].enabled = true;
         }
 
-        broadcastNewTracks( myStream, 'video' );
+        h.broadcastNewTracks( myStream, 'video' );
     } );
 
     $('#toggle-mute').on( 'click', ( e ) => {
@@ -322,7 +293,7 @@ $(window).on( 'load', () => {
             myStream.getAudioTracks()[0].enabled = true;
         }
 
-        broadcastNewTracks( myStream, 'audio' );
+        h.broadcastNewTracks( myStream, 'audio' );
     } );
 
     $('#share-screen').on( 'click', ( e ) => {

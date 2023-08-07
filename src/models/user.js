@@ -45,7 +45,6 @@ userSchema.methods.toJSON = function () {
 
     delete userObject.tokens
     delete userObject.password
-    delete userObject.avatar
 
     return userObject
 }
@@ -73,6 +72,16 @@ userSchema.statics.findByCredentials = async (username, password) => {
     }
 
     return user
+}
+
+userSchema.statics.getAllUsers = async () => {
+    const users = await User.find()
+    
+    if (!users) {
+        throw new Error('No user exists!')
+    }
+
+    return users
 }
 
 userSchema.pre('save', async function (next) {

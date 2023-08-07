@@ -21,8 +21,8 @@
 </head>
 
 <body>
-    <div class="chat">
-        <div class="chat__navbar">
+    <div class="chat" id="chat">
+        <!-- <div class="chat__navbar">
             <div class="menu">
                 <a href="/index">Homepage</a>
                 <a href="/login">Login</a>
@@ -31,8 +31,20 @@
             <div id="logout-btn">
                 <button>Logout</button>
             </div>
-        </div>
+        </div> -->
+
         <div class="chat__sidebar">
+            <div class="user__informations">
+                <div class="info__image">
+                    <img src="" alt="">
+                </div>
+                <div class="info__username">
+                    <span></p>
+                </div>
+                <div class="info_settings">
+                    <button class="remove-css-button">...</button>
+                </div>
+            </div>
             <ul id="user-list"></ul>
         </div>
         <div class="chat__homepage">
@@ -40,8 +52,8 @@
         <div class="chat__main">
             <div class="chat-nav">
                 <ul>
-                  <li><button id="audio-call"><i class="phone icon"></i></button></li>
-                  <li><button id="video-call"><i class="video icon"></i></button></li>
+                  <li><button id="audio-call" class="call"><i class="phone icon"></i></button></li>
+                  <li><button id="video-call" class="call"><i class="video icon"></i></button></li>
                 </ul>
             </div>
             <div id="messages" class="chat__messages"></div>
@@ -68,6 +80,8 @@
             <audio id="ringtone" preload="auto">
                 <source src="/media/iphone.mp3" type="audio/mpeg">
             </audio>
+            
+            <button class="scroll-to-bottom-button"><i class="arrow alternate circle down outline icon"></i></button>
 
             <div class="compose">
                 <form id="message-form">
@@ -156,6 +170,52 @@
             <i class="{{#online}}fas fa-circle online{{/online}}{{^online}}fas fa-circle offline{{/online}}"></i>&nbsp&nbsp{{#online}}online{{/online}}{{^online}}offline{{/online}}
         </li>
         {{/users}}
+    </script>
+
+    <script id="settings-template" type="text/template">
+        <div class="settings" id="settings">
+            <div id="user-info">
+                <button class="remove-css-button">User Info</button>
+            </div>
+            <div id="logout-btn">
+                <button class="remove-css-button">Logout</button>
+            </div>
+        </div>
+    </script>
+
+    <script id="user-settings-popup-template" type="text/template">
+        <div id="user-settings-popup" class="popup">
+            <form id="user-settings-form" method="post" autocomplete="off">
+                <div class="popup-content">
+                    <span class="close" id="closePopupBtn">&times;</span>
+                    <h2>Change User Settings</h2>
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" value="{{username}}" readonly/>
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" value="{{email}}" readonly/>
+
+                    <label for="avatar">Avatar URL:</label>
+                    <img id="avatarImage" src="{{avatar}}" alt="Avatar" width="200" height="200">
+                    <input type="file" id="avatar" accept="image/*" style="display:none;">
+                    <button id="uploadAvatarBtn">Upload Avatar</button>
+
+                    <label for="changePasswordCheckbox">
+                        <input type="checkbox" id="changePasswordCheckbox" /> Change Password
+                    </label>
+
+                    <div id="passwordFields">
+                        <label for="currentPassword">Current Password:</label>
+                        <input type="password" id="currentPassword" autocomplete="off"/>
+                        <label for="newPassword">New Password:</label>
+                        <input type="password" id="newPassword" autocomplete="off"/>
+                        <label for="confirmPassword">Confirm Password:</label>
+                        <input type="password" id="confirmPassword" autocomplete="off"/>
+                    </div>
+
+                    <button id="saveChangesBtn">Save Changes</button>
+                </div>
+            </form>
+        </div>
     </script>
 </body>
 

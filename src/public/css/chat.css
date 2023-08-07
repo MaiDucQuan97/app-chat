@@ -50,20 +50,6 @@
     background-color: #f2f3f5;
 }
 
-#logout-btn {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-}
-
-#logout-btn button {
-    padding: 8px 16px;
-    background-color: #f44336;
-    color: #fff;
-    border: none;
-    cursor: pointer;
-}
-
 .menu {
     display: flex;
     background-color: #f1f1f1;
@@ -136,54 +122,177 @@ button:disabled {
     background: #7c5cbf94;
 }
 
-.centered-form {
-    background: #333744;
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.centered-form__box {
-    box-shadow: 0px 0px 17px 1px #1D1F26;
-    background: #F7F7FA;
-    padding: 24px;
-    width: 250px;
-}
-
-.centered-form button {
-    width: 100%;
-}
-
-.centered-form input {
-    margin-bottom: 16px;
-    width: 100%;
-}
-
 .chat {
     display: flex;
     flex-wrap: wrap;
 }
 
-.chat__navbar {
-    height: 40px;
-    flex: 100%;
-}
 
+/* Chat sidebar*/
 .chat__sidebar {
-    height: 95vh;
+    height: 100vh;
     color: white;
     background: #333744;
     flex: 15%;
     overflow-y: scroll
 }
 
+.users {
+    list-style-type: none;
+    font-weight: 300;
+    padding: 12px 24px 0 24px;
+}
+.online {
+    color: green;
+}
+.fas.fa-circle {
+    font-size: 10px;
+}
+.user {
+    margin: 5px 10px;
+    cursor: pointer;
+    padding: 10px;
+}
+.user:hover {
+  background-color: lightgray;
+  border-radius: 5px;
+}
+
+.user__informations {
+    display: flex;
+    justify-content: space-between;
+}
+
+.info__username {
+    align-self: center;
+}
+
+.infor__username span {
+    text-align: center;
+    font-size: 16px;
+    color: white;
+}
+  
+.info__image img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin: 10px;
+}
+
+.remove-css-button {
+    background: transparent;
+}
+
+.remove-css-button:hover {
+    background: transparent;
+}
+
+.settings {
+    display: flex;
+    position: fixed;
+    top: 35px;
+    left: 200px;
+    flex-direction: column;
+    background: #000;
+    width: 25vh;
+    align-content: flex-end;
+    flex-wrap: wrap;
+}
+
+#logout-btn button{
+    color: red;
+}
+
+
+/* Popup user settings */
+.popup {
+    display: block;
+    z-index: 9999;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.popup-content {
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 100vh;
+    min-height: 70vh;
+}
+
+.popup-content h2 {
+    align-self: center;
+}
+
+.popup-content input {
+    margin-bottom: 10px;
+}
+
+#saveChangesBtn { 
+    width: 50%;
+    align-self: center;
+    margin: 10px;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#passwordFields {
+    display: none;
+}
+
+#passwordFields input {
+    width: 100%;
+}
+
+#changePasswordCheckbox {
+    width: 17px;
+    height: 17px;
+}
+
+#avatarImage, #uploadAvatarBtn {
+    align-self: center;
+    margin-bottom: 10px;
+}
+
+
+/* Style for the readonly input */
+input[readonly] {
+    background-color: #f5f5f5;
+    border: 1px solid #ccc;
+    color: #555;
+}
+
+
+/* message content*/
 .chat__main {
     display: flex;
     flex-direction: column;
     position: relative;
-    max-height: 95vh;
+    max-height: 100vh;
     flex: 85%;
 }
 
@@ -195,12 +304,6 @@ button:disabled {
 
 .message {
     margin-bottom: 16px;
-}
-
-.message__name {
-    font-weight: 600;
-    font-size: 14px;
-    margin-right: 8px;
 }
 
 .message__meta {
@@ -235,41 +338,6 @@ button:disabled {
 
 .compose button {
     font-size: 14px;
-}
-
-.room-title {
-    font-weight: 400;
-    font-size: 22px;
-    background: #2c2f3a;
-    padding: 24px;
-}
-
-.list-title {
-    font-weight: 500;
-    font-size: 18px;
-    margin-bottom: 4px;
-    padding: 12px 24px 0 24px;
-}
-
-.users {
-    list-style-type: none;
-    font-weight: 300;
-    padding: 12px 24px 0 24px;
-}
-.online {
-    color: green;
-}
-.fas.fa-circle {
-    font-size: 10px;
-}
-.user {
-    margin: 5px 10px;
-    cursor: pointer;
-    padding: 10px;
-}
-.user:hover {
-  background-color: lightgray;
-  border-radius: 5px;
 }
 
 .message__imgfile {
@@ -334,7 +402,10 @@ button:disabled {
     white-space: nowrap;
 }
 
+
+/* video call, audio call nav menu */
 .chat-nav {
+    display: none;
     position: sticky;
     top: 0;
     z-index: 100;
@@ -363,15 +434,8 @@ button:disabled {
     background-color: #ddd;
 }
 
-@keyframes ring {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.2);
-    }
-}
 
+/* Call notification */
 #incomming-call-notification {
     animation: ring 2s infinite;
     display: none;
@@ -419,4 +483,25 @@ button:disabled {
 .notification__content .cancel-call {
     color: red;
     font-size: 1.5em;
+}
+
+
+/* Scroll to bottom button*/
+.scroll-to-bottom-button {
+    display: none;
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    padding: 5px;
+    background-color: gray;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    z-index: 9999;
+}
+
+.scroll-to-bottom-button .icon {
+    font-size: 1.5em;
+    margin: 0px;
 }

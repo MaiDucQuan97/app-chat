@@ -13,7 +13,9 @@ $(window).on( 'load', () => {
         selectedUserId = '',
         selectedUsername = '',
         currentUserId = '',
-        callingFrom = ''
+        callingFrom = '',
+        callingType = '',
+        currentUser = {}
 
     const socket = io();
     if (Notification.permission !== 'granted') {
@@ -136,6 +138,11 @@ $(window).on( 'load', () => {
         userListElm.empty()
         userListElm.append(html)
 
+        currentUser = userList[currentUserId]
+        $('.info__image img').attr('alt', currentUser.username)
+        $('.info__image img').attr('src', currentUser.avatar)
+        $('.info__username span').text(currentUser.username)
+
         $('#user-list .user').on('click', function (e) {
             let messageTemplateElm = $('#message-template'),
                 messagesElm = $('#messages'),
@@ -154,6 +161,8 @@ $(window).on( 'load', () => {
                     recipientUsername: selectedUsername
                 },
                 success: function (response) {
+                    $('.chat-nav').toggle(selectedUserId !== currentUserId)
+
                     if (response.length !== 0) {
                         response.forEach((message) => {
                             if (message.type == 'file') {
@@ -197,6 +206,8 @@ $(window).on( 'load', () => {
                         })
 
                         h.scrollToBottom()
+
+                        h.addScrollToBottomButton()
                     }
                 },
                 error: function (xhr, status, error) {
@@ -269,7 +280,7 @@ $(window).on( 'load', () => {
         h.scrollToBottom(false, loadedImg.length)
     });
 
-    socket.on('incommingCall', (from) => {
+    socket.on('incommingCall', ({ from, type}) => {
         const ringtone = $('#ringtone'),
               callerName = $('#caller-name');
 
@@ -280,6 +291,7 @@ $(window).on( 'load', () => {
         ringtone[0].play();
 
         callingFrom = from
+        callingType = type
     })
 
     socket.on('cancelIncommingCall', () => {
@@ -298,7 +310,7 @@ $(window).on( 'load', () => {
     socket.on('callAnswered', (to) => {
         h.hideAllCallingNotification()
 
-        let redirectUrl = `/video?toUserId=${to}&fromUserId=${currentUserId}`
+        let redirectUrl = `/video?toUserId=${to}&fromUserId=${currentUserId}&callingType=${callingType}`
         window.location.replace(redirectUrl)
     })
 
@@ -308,11 +320,16 @@ $(window).on( 'load', () => {
         }
     })
 
-    $(document).on("click", "#video-call", () => {
+    $(document).on("click", ".call", (event) => {
+        const clickedElementId = event.currentTarget.id;
+
         socket.emit('calling', {
             from: currentUserId,
-            to: selectedUserId
+            to: selectedUserId,
+            type: clickedElementId
         })
+
+        callingType = clickedElementId
         $('.chat__callnotification').css('display', 'flex')
         $('#incomming-call-notification').hide()
         $('#calling-notification').show()
@@ -337,9 +354,41 @@ $(window).on( 'load', () => {
         socket.emit('answerIncommingCalling', {from: callingFrom, to: currentUserId})  
 
         setTimeout(() => {
-            let redirectUrl = `/video?toUserId=${callingFrom}&fromUserId=${currentUserId}`
+            let redirectUrl = `/video?toUserId=${callingFrom}&fromUserId=${currentUserId}&callingType=${callingType}`
             window.location.replace(redirectUrl)
         }, 2000)
+    })
+
+    $(document).on("click", ".info_settings button", () => {
+        let settingsTemplateElm = $('#settings-template'),
+            chatElm = $('#chat'),
+            settingElm = $('#settings')
+
+        if (settingElm.length === 0) {
+            const html = Mustache.render(settingsTemplateElm.html())
+
+            chatElm.append(html)
+        } else {
+            settingElm.remove()
+        }
+    })
+
+    $(document).on("click", "#user-info button", () => {
+        let userSettingsPopupTemplate = $('#user-settings-popup-template'),
+            chatElm = $('#chat')
+
+        const html = Mustache.render(userSettingsPopupTemplate.html(), {
+            username: currentUser.username,
+            email: currentUser.email,
+            avatar: currentUser.avatar
+        })
+
+        chatElm.append(html)
+        $('#settings').remove()
+    })
+
+    $(document).on("click", "#closePopupBtn", () => {
+        $('#user-settings-popup').remove()
     })
 
     $("#sendMessage").on("click", function (e) {
@@ -352,17 +401,24 @@ $(window).on( 'load', () => {
         }
     })
 
-    $('#logout-btn').on("click", function () {
-        $.ajax({
-            type: 'POST',
-            url: '/user/logout',
-            success: function (response) {
-                window.location.href = '/login'
-            },
-            error: function (xhr, status, error) {
-                alert('Logout failed. Please try again.');
-            }
-        });
+    $(document).on("click", '#logout-btn', function () {
+        $('#settings').remove()
+        h.logout()
+    })
+
+    $(document).on("change", "#changePasswordCheckbox", () => {
+        let passwordFields = $("#passwordFields"),
+            currentPasswordInput = $("#currentPassword"),
+            newPasswordInput = $("#newPassword"),
+            confirmPasswordInput = $("#confirmPassword");
+
+        passwordFields.toggle();
+
+        if (!passwordFields.is(":visible")) {
+            currentPasswordInput.val("");
+            newPasswordInput.val("");
+            confirmPasswordInput.val("");
+        }
     })
 
     $('#openInputFileButton').on("click", function () {
@@ -371,5 +427,82 @@ $(window).on( 'load', () => {
 
     $('#fileInput').on("input", function () {
         uploadFile(this.files);
+    })
+
+    $(document).on('click', function(event) {
+        let settingElm = $('#settings'),
+            infoSettingsElm = $('.info_settings button')
+
+        if (
+            !settingElm.is(event.target) && !settingElm.has(event.target).length &&
+            !infoSettingsElm.is(event.target) && !infoSettingsElm.has(event.target).length
+        ) {
+            settingElm.remove()
+        }
+    })
+
+    $(document).on("click", "#uploadAvatarBtn", (e) => {
+        e.preventDefault()
+        $('#avatar').click()
+    })
+
+    $(document).on("change", "#avatar", (event) => {
+        const file = event.target.files[0];
+
+        if (file) {
+            const reader = new FileReader();
+
+            reader.onload = function() {
+                $("#avatarImage").attr("src", reader.result);
+            };
+
+            reader.readAsDataURL(file);
+        }
+    })
+
+    $(document).on("submit", "#user-settings-form", (event) => {
+        event.preventDefault();
+
+        let username = $('#username').val(),
+            changePasswordCheckbox = $('#changePasswordCheckbox').is(':checked'),
+            newAvatarFile = $("#avatar")[0].files[0]
+
+        const formData = new FormData();
+        formData.append("username", username);
+        formData.append("avatar", newAvatarFile);
+        formData.append("changePasswordCheckbox", changePasswordCheckbox);
+
+
+        if (changePasswordCheckbox) {
+            let currentPassword = $('#currentPassword').val(),
+                newPassword = $('#newPassword').val(),
+                confirmPassword = $('#confirmPassword').val()
+
+            formData.append("currentPassword", currentPassword);
+            formData.append("newPassword", newPassword);
+            formData.append("confirmPassword", confirmPassword);
+
+            if (newPassword !== confirmPassword) {
+                alert('New password and confirm password do not match.');
+                return;
+            }
+        }
+
+        $.ajax({
+            type: 'POST',
+            url: '/user/update',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                $('#user-settings-popup').remove()
+                alert('Change user settings successfully!')
+                h.logout()
+            },
+            error: function (xhr, status, error) {
+                console.log(xhr.responseText)
+                alert('Change user settings fail. Please try again.')
+            }
+        });
     })
 })
